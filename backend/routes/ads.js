@@ -1,0 +1,191 @@
+const express = require('express');
+const router = express.Router();
+const pool = require('../config/database');
+const { logActivity } = require('../middleware/activityLog');
+const { authorize } = require('../middleware/auth');
+
+// Get all ads KPIs with filters
+router.get('/', async (req, res) => {
+    try {
+        const { startDate, endDate, clientId } = req.query;
+        let query = `
+            SELECT a.*, c.name as client_name, tm.name as team_member_name
+            FROM ads_kpis a
+            LEFT JOIN clients c ON a.client_id = c.id
+            LEFT JOIN team_members tm ON a.team_member_id = tm.id
+            WHERE 1=1
+        `;
+        const params = [];
+
+        if (startDate) {
+            query += ` AND a.date >= $${params.length + 1}`;
+            params.push(startDate);
+        }
+
+        if (endDate) {
+            query += ` AND a.date <= $${params.length + 1}`;
+            params.push(endDate);
+        }
+
+        if (clientId) {
+            query += ` AND a.client_id = $${params.length + 1}`;
+            params.push(clientId);
+        }
+
+        query += ' ORDER BY a.date DESC';
+
+        const result = await pool.query(query, params);
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching ads KPIs:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Create new ads KPI
+router.post('/', authorize(['admin', 'editor']), async (req, res) => {
+    const {
+        client_id,
+        team_member_id,
+        date,
+        platform,
+        cost_per_lead,
+        quality_of_ads,
+        lead_quality,
+        closing_ratio,
+        quantity_leads,
+        keyword_refinement,
+        cost_per_click,
+        conversions,
+        closing,
+        tracking
+    } = req.body;
+
+    try {
+        const result = await pool.query(
+            `INSERT INTO ads_kpis 
+            (client_id, team_member_id, date, platform, cost_per_lead, quality_of_ads,
+             lead_quality, closing_ratio, quantity_leads, keyword_refinement,
+             cost_per_click, conversions, closing, tracking)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *`,
+            [
+                client_id, team_member_id, date, platform, cost_per_lead, quality_of_ads,
+                lead_quality, closing_ratio, quantity_leads, keyword_refinement,
+                cost_per_click, conversions, closing, tracking
+            ]
+        );
+        
+        const kpi = result.rows[0];
+        
+        // Get client name for logging
+        const clientResult = await pool.query('SELECT name FROM clients WHERE id = $1', [client_id]);
+        const clientName = clientResult.rows[0]?.name || 'Unknown Client';
+        
+        // Log the activity
+        const userId = req.user?.id || null;
+        const userName = req.user?.full_name || 'Unknown User';
+        await logActivity(
+            userId,
+            'data_added',
+            'ads',
+            kpi.id,
+            `${clientName} - ${platform}`,
+            'AdsTab',
+            `${userName} added ads data for ${clientName} on ${date}`
+        );
+        
+        res.status(201).json(kpi);
+    } catch (error) {
+        console.error('Error creating ads KPI:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Update ads KPI
+router.put('/:id', authorize(['admin', 'editor']), async (req, res) => {
+    const { id } = req.params;
+    const {
+        client_id,
+        team_member_id,
+        date,
+        platform,
+        cost_per_lead,
+        quality_of_ads,
+        lead_quality,
+        closing_ratio,
+        quantity_leads,
+        keyword_refinement,
+        cost_per_click,
+        conversions,
+        closing,
+        tracking
+    } = req.body;
+
+    try {
+        const result = await pool.query(
+            `UPDATE ads_kpis 
+            SET client_id = $1, team_member_id = $2, date = $3, platform = $4,
+                cost_per_lead = $5, quality_of_ads = $6, lead_quality = $7,
+                closing_ratio = $8, quantity_leads = $9, keyword_refinement = $10,
+                cost_per_click = $11, conversions = $12, closing = $13, tracking = $14,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $15 RETURNING *`,
+            [
+                client_id, team_member_id, date, platform, cost_per_lead, quality_of_ads,
+                lead_quality, closing_ratio, quantity_leads, keyword_refinement,
+                cost_per_click, conversions, closing, tracking, id
+            ]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Ads KPI not found' });
+        }
+        
+        const kpi = result.rows[0];
+        
+        // Get client name for logging
+        const clientResult = await pool.query('SELECT name FROM clients WHERE id = $1', [client_id]);
+        const clientName = clientResult.rows[0]?.name || 'Unknown Client';
+        
+        // Log the activity
+        const userId = req.user?.id || null;
+        const userName = req.user?.full_name || 'Unknown User';
+        await logActivity(
+            userId,
+            'data_edited',
+            'ads',
+            kpi.id,
+            `${clientName} - ${platform}`,
+            'AdsTab',
+            `${userName} edited ads data for ${clientName} on ${date}`
+        );
+        
+        res.json(kpi);
+    } catch (error) {
+        console.error('Error updating ads KPI:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Delete ads KPI
+router.delete('/:id', authorize(['admin', 'editor']), async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const result = await pool.query(
+            'DELETE FROM ads_kpis WHERE id = $1 RETURNING *',
+            [id]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Ads KPI not found' });
+        }
+        
+        res.json({ message: 'Ads KPI deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting ads KPI:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+module.exports = router;

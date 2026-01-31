@@ -214,30 +214,6 @@ const Login = () => {
               </Button>
             </Box>
 
-            {/* Demo credentials */}
-            <Box
-              sx={{
-                mt: 3,
-                p: 2,
-                bgcolor: '#0f0f1e',
-                borderRadius: 2,
-                border: '1px solid rgba(255, 255, 255, 0.12)',
-              }}
-            >
-              <Typography variant="caption" color="textSecondary" display="block" sx={{ mb: 1, fontWeight: 600 }}>
-                Demo Credentials:
-              </Typography>
-              <Typography variant="caption" sx={{ display: 'block', mb: 0.5 }}>
-                <strong>Admin:</strong> admin / password123
-              </Typography>
-              <Typography variant="caption" sx={{ display: 'block', mb: 0.5 }}>
-                <strong>Editor:</strong> editor / password123
-              </Typography>
-              <Typography variant="caption" sx={{ display: 'block' }}>
-                <strong>Viewer:</strong> viewer / password123
-              </Typography>
-            </Box>
-
             {/* Footer */}
             <Typography
               variant="caption"

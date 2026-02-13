@@ -152,7 +152,26 @@ router.delete('/:id', authorize(['admin', 'editor']), async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Client response not found' });
         }
-        
+
+        try {
+            const response = result.rows[0];
+            const clientResult = await pool.query('SELECT name FROM clients WHERE id = $1', [response.client_id]);
+            const clientName = clientResult.rows[0]?.name || 'Unknown Client';
+            const userId = req.user?.id || null;
+            const userName = req.user?.full_name || 'Unknown User';
+            await logActivity(
+                userId,
+                'data_deleted',
+                'client_responses',
+                response.id,
+                `${clientName} - Response`,
+                'ClientResponsesTab',
+                `${userName} deleted client response for ${clientName} on ${response.date}`
+            );
+        } catch (e) {
+            console.error('Error logging client response deletion:', e.message);
+        }
+
         res.json({ message: 'Client response deleted successfully' });
     } catch (error) {
         console.error('Error deleting client response:', error);

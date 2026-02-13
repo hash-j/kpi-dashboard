@@ -180,7 +180,26 @@ router.delete('/:id', authorize(['admin', 'editor']), async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Website SEO KPI not found' });
         }
-        
+
+        try {
+            const kpi = result.rows[0];
+            const clientResult = await pool.query('SELECT name FROM clients WHERE id = $1', [kpi.client_id]);
+            const clientName = clientResult.rows[0]?.name || 'Unknown Client';
+            const userId = req.user?.id || null;
+            const userName = req.user?.full_name || 'Unknown User';
+            await logActivity(
+                userId,
+                'data_deleted',
+                'website_seo',
+                kpi.id,
+                `${clientName} - SEO`,
+                'WebsiteSEOTab',
+                `${userName} deleted website SEO data for ${clientName} on ${kpi.date}`
+            );
+        } catch (e) {
+            console.error('Error logging website SEO deletion:', e.message);
+        }
+
         res.json({ message: 'Website SEO KPI deleted successfully' });
     } catch (error) {
         console.error('Error deleting website SEO KPI:', error);

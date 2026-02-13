@@ -105,18 +105,26 @@ const Header = ({ toggleSidebar, sidebarOpen }) => {
 
     if (action === 'user_added') {
       return `${user} added new user: ${entity}`;
+    } else if (action === 'user_deleted') {
+      return `${user} deleted user: ${entity}`;
     } else if (action === 'user_edited') {
       return `${user} edited user: ${entity}`;
     } else if (action === 'client_added') {
       return `${user} added new client: ${entity}`;
+    } else if (action === 'client_deleted') {
+      return `${user} deleted client: ${entity}`;
     } else if (action === 'client_edited') {
       return `${user} edited client: ${entity}`;
     } else if (action === 'team_member_added') {
       return `${user} added new team member: ${entity}`;
+    } else if (action === 'team_member_deleted') {
+      return `${user} deleted team member: ${entity}`;
     } else if (action === 'team_member_edited') {
       return `${user} edited team member: ${entity}`;
     } else if (action === 'data_added') {
       return `${user} added ${activity.entity_type} data for ${entity}`;
+    } else if (action === 'data_deleted') {
+      return `${user} deleted ${activity.entity_type} data for ${entity}`;
     } else if (action === 'data_edited') {
       return `${user} edited ${activity.entity_type} data for ${entity}`;
     }

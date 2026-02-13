@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
+const { logActivity } = require('../middleware/activityLog');
 const bcrypt = require('bcryptjs');
 const { generateToken, authenticateToken } = require('../middleware/auth');
 
@@ -189,7 +190,29 @@ router.delete('/users/:userId', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Cannot delete your own account' });
     }
 
-    await db.query('DELETE FROM users WHERE id = $1', [userId]);
+    // Delete and return deleted user for logging
+    const result = await db.query('DELETE FROM users WHERE id = $1 RETURNING *', [userId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    try {
+      const deletedUser = result.rows[0];
+      const userIdLogger = req.user?.id || null;
+      const userName = req.user?.full_name || 'Unknown User';
+      await logActivity(
+        userIdLogger,
+        'user_deleted',
+        'user',
+        deletedUser.id,
+        deletedUser.full_name || deletedUser.username || 'User',
+        null,
+        `${userName} deleted user: ${deletedUser.full_name || deletedUser.username}`
+      );
+    } catch (e) {
+      console.error('Error logging user deletion:', e.message);
+    }
+
     res.json({ message: 'User deleted successfully' });
   } catch (error) {
     console.error('Delete user error:', error);

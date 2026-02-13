@@ -114,6 +114,23 @@ router.delete('/:id', async (req, res) => {
         
         await connection.query('COMMIT');
         connection.release();
+        // Log the deletion
+        try {
+            const userId = req.user?.id || null;
+            const userName = req.user?.full_name || 'Unknown User';
+            await logActivity(
+                userId,
+                'team_member_deleted',
+                'team_member',
+                result.rows[0].id,
+                memberName,
+                null,
+                `${userName} deleted team member: ${memberName}`
+            );
+        } catch (e) {
+            console.error('Error logging team member deletion:', e.message);
+        }
+
         res.json({ message: 'Team member and all related data deleted successfully', deletedMember: result.rows[0] });
     } catch (error) {
         try {

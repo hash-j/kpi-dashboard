@@ -160,7 +160,26 @@ router.delete('/:id', authorize(['admin', 'editor']), async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Team KPI not found' });
         }
-        
+
+        try {
+            const kpi = result.rows[0];
+            const memberResult = await pool.query('SELECT name FROM team_members WHERE id = $1', [kpi.team_member_id]);
+            const memberName = memberResult.rows[0]?.name || 'Unknown Member';
+            const userId = req.user?.id || null;
+            const userName = req.user?.full_name || 'Unknown User';
+            await logActivity(
+                userId,
+                'data_deleted',
+                'team_kpis',
+                kpi.id,
+                `${memberName} - KPI`,
+                'TeamTab',
+                `${userName} deleted team KPI data for ${memberName} on ${kpi.date}`
+            );
+        } catch (e) {
+            console.error('Error logging team KPI deletion:', e.message);
+        }
+
         res.json({ message: 'Team KPI deleted successfully' });
     } catch (error) {
         console.error('Error deleting team KPI:', error);

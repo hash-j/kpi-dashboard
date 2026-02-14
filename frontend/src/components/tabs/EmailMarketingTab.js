@@ -182,7 +182,10 @@ const calculateStats = () => {
     };
   }
   
-  const validOpeningRatios = data.filter(item => item.opening_ratio !== null && item.opening_ratio !== undefined && item.opening_ratio > 0);
+  const validOpeningRatios = data.filter(item => {
+    const ratio = parseFloat(item.opening_ratio);
+    return !isNaN(ratio) && ratio > 0;
+  });
   
   const stats = {
     totalEmailsSent: data.reduce((sum, item) => sum + (item.emails_sent || 0), 0),
@@ -432,7 +435,7 @@ const calculateStats = () => {
 
                   const clientStats = {
                     totalEmails: clientData.reduce((sum, item) => sum + (item.emails_sent || 0), 0),
-                    avgRatio: clientData.reduce((sum, item) => sum + (item.opening_ratio || 0), 0) / clientData.length,
+                    avgRatio: clientData.reduce((sum, item) => sum + (parseFloat(item.opening_ratio) || 0), 0) / clientData.length,
                     avgQuality: clientData.reduce((sum, item) => sum + (item.template_quality || 0), 0) / clientData.length,
                   };
 
@@ -452,12 +455,12 @@ const calculateStats = () => {
                             </Typography>
                             <LinearProgress
                               variant="determinate"
-                              value={clientStats.avgRatio}
+                              value={isNaN(clientStats.avgRatio) ? 0 : clientStats.avgRatio}
                               sx={{ height: 6, borderRadius: 3 }}
                               color={clientStats.avgRatio > 50 ? "success" : clientStats.avgRatio > 30 ? "warning" : "error"}
                             />
                             <Typography variant="body2" align="right">
-                              {clientStats.avgRatio.toFixed(1)}%
+                              {isNaN(clientStats.avgRatio) ? '0.0' : clientStats.avgRatio.toFixed(1)}%
                             </Typography>
                           </Box>
                           <Box>

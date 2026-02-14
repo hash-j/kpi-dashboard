@@ -18,6 +18,7 @@ import Login from './pages/Login';
 import Profile from './pages/Profile';
 import AddAccount from './pages/AddAccount';
 import UsersManagement from './pages/UsersManagement';
+import ActivityHistory from './pages/ActivityHistory';
 
 // Context Providers
 import { AuthProvider, AuthContext } from './context/AuthContext';
@@ -257,6 +258,7 @@ function App() {
                               <Routes>
                                 <Route path="/" element={<Navigate to="/overview" />} />
                                 <Route path="/dashboard" element={<Navigate to="/overview" />} />
+                                <Route path="/activity-history" element={<ActivityHistory />} />
                                 <Route path="/social-media" element={<Dashboard />} />
                                 <Route path="/website-seo" element={<Dashboard />} />
                                 <Route path="/ads" element={<Dashboard />} />

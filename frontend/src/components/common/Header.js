@@ -260,7 +260,7 @@ const Header = ({ toggleSidebar, sidebarOpen }) => {
             <MenuItem 
               onClick={() => {
                 handleCloseNotifications();
-                // You can navigate to a full activities page here
+                navigate('/activity-history');
               }}
               sx={{ justifyContent: 'center', color: 'primary.main', fontWeight: 'medium', py: 1.5, borderTop: '1px solid rgba(255, 255, 255, 0.12)' }}
             >

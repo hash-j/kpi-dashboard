@@ -204,6 +204,7 @@ const WebsiteSEOTab = () => {
       avgDA: data.reduce((sum, item) => sum + (item.domain_authority || 0), 0) / data.length,
       avgPA: data.reduce((sum, item) => sum + (item.page_authority || 0), 0) / data.length,
       totalIssues: data.reduce((sum, item) => sum + (item.issues || 0), 0),
+      avgSiteHealth: data.reduce((sum, item) => sum + (item.site_health || 0), 0) / data.length,
       reportsSentCount: data.filter(item => item.reports_sent).length,
       rankingIssuesCount: data.filter(item => item.ranking_issues).length,
     };
@@ -350,6 +351,26 @@ const WebsiteSEOTab = () => {
               <CardContent sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
                 <Typography variant="h6" gutterBottom>
                   Site Health
+                </Typography>
+                <Box>
+                  <Typography variant="h4" gutterBottom sx={{ 
+                    color: stats.avgSiteHealth >= 80 ? 'success.main' : stats.avgSiteHealth >= 60 ? 'warning.main' : 'error.main' 
+                  }}>
+                    {stats.avgSiteHealth ? stats.avgSiteHealth.toFixed(1) : 0}%
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Average Health
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={2}>
+            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <CardContent sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
+                <Typography variant="h6" gutterBottom>
+                  Issues
                 </Typography>
                 <Box>
                   <Typography variant="h4" gutterBottom sx={{ 

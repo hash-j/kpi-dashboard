@@ -429,7 +429,7 @@ const WebsiteSEOTab = () => {
                   <Legend />
                   <Bar dataKey="blogs_posted" fill="#0A58BF" name="Blogs" />
                   <Bar dataKey="backlinks" fill="#5505A6" name="Backlinks" />
-                  <Bar dataKey="keyword_pass" fill="#3A7FD9" name="Keyword Pass" />
+                  <Bar dataKey="keyword_pass" fill="#3A7FD9" name="Keyword Ranking" />
                 </BarChart>
               </ResponsiveContainer>
             </Paper>
@@ -574,7 +574,7 @@ const WebsiteSEOTab = () => {
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
-                  label="Keyword Pass"
+                  label="Keyword Ranking"
                   type="number"
                   value={formData.keyword_pass}
                   onChange={(e) => setFormData({ ...formData, keyword_pass: parseInt(e.target.value) || 0 })}

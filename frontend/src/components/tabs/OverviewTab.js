@@ -120,8 +120,8 @@ const OverviewTab = () => {
     setLoading(true);
     try {
       const params = {
-        startDate: startDate.toISOString().split('T')[0],
-        endDate: endDate.toISOString().split('T')[0],
+        startDate: formatDateOnly(startDate),
+        endDate: formatDateOnly(endDate),
       };
       if (selectedClient) params.clientId = selectedClient;
 
@@ -333,7 +333,7 @@ const OverviewTab = () => {
       icon: <TrendingUpIcon />,
       color: '#4caf50',
       progress: overviewData.websiteSEO.avgDA || 0,
-      progressLabel: 'Avg Domain Authority',
+      progressLabel: 'Avg Page Speed on Mobile',
     },
     {
       title: 'ADS & Closings',
@@ -564,7 +564,7 @@ const OverviewTab = () => {
                     {overviewData.websiteSEO.avgDA ? overviewData.websiteSEO.avgDA.toFixed(1) : 0}
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
-                    Domain Authority
+                    Page Speed on Mobile
                   </Typography>
                   <Box sx={{ mt: 2 }}>
                     <LinearProgress
@@ -574,7 +574,7 @@ const OverviewTab = () => {
                     />
                   </Box>
                   <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                    Page Authority: {overviewData.websiteSEO.avgPA ? overviewData.websiteSEO.avgPA.toFixed(1) : 0}
+                    Page Speed on the Desktop: {overviewData.websiteSEO.avgPA ? overviewData.websiteSEO.avgPA.toFixed(1) : 0}
                   </Typography>
                 </Box>
               </Box>

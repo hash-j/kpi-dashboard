@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
     try {
         const { startDate, endDate, clientId } = req.query;
         let query = `
-            SELECT em.*, c.name as client_name, tm.name as team_member_name
+            SELECT em.*, em.team_member_ids, c.name as client_name, tm.name as team_member_name
             FROM email_marketing_kpis em
             LEFT JOIN clients c ON em.client_id = c.id
             LEFT JOIN team_members tm ON em.team_member_id = tm.id
@@ -47,18 +47,23 @@ router.post('/', authorize(['admin', 'editor']), async (req, res) => {
     const {
         client_id,
         team_member_id,
+        team_member_ids,
         date,
         template_quality,
         emails_sent,
         opening_ratio
     } = req.body;
 
+    const primaryTeamMemberId = (Array.isArray(team_member_ids) && team_member_ids.length > 0)
+        ? team_member_ids[0]
+        : team_member_id;
+
     try {
         const result = await pool.query(
             `INSERT INTO email_marketing_kpis 
-            (client_id, team_member_id, date, template_quality, emails_sent, opening_ratio)
-            VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-            [client_id, team_member_id, date, template_quality, emails_sent, opening_ratio]
+            (client_id, team_member_id, team_member_ids, date, template_quality, emails_sent, opening_ratio)
+            VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+            [client_id, primaryTeamMemberId, team_member_ids || [], date, template_quality, emails_sent, opening_ratio]
         );
         
         const kpi = result.rows[0];
@@ -93,20 +98,25 @@ router.put('/:id', authorize(['admin', 'editor']), async (req, res) => {
     const {
         client_id,
         team_member_id,
+        team_member_ids,
         date,
         template_quality,
         emails_sent,
         opening_ratio
     } = req.body;
 
+    const primaryTeamMemberId = (Array.isArray(team_member_ids) && team_member_ids.length > 0)
+        ? team_member_ids[0]
+        : team_member_id;
+
     try {
         const result = await pool.query(
             `UPDATE email_marketing_kpis 
-            SET client_id = $1, team_member_id = $2, date = $3, 
-                template_quality = $4, emails_sent = $5, opening_ratio = $6,
+            SET client_id = $1, team_member_id = $2, team_member_ids = $3, date = $4, 
+                template_quality = $5, emails_sent = $6, opening_ratio = $7,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = $7 RETURNING *`,
-            [client_id, team_member_id, date, template_quality, emails_sent, opening_ratio, id]
+            WHERE id = $8 RETURNING *`,
+            [client_id, primaryTeamMemberId, team_member_ids || [], date, template_quality, emails_sent, opening_ratio, id]
         );
         
         if (result.rows.length === 0) {

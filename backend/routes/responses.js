@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
     try {
         const { startDate, endDate, clientId } = req.query;
         let query = `
-            SELECT cr.*, c.name as client_name, tm.name as team_member_name
+            SELECT cr.*, cr.team_member_ids, c.name as client_name, tm.name as team_member_name
             FROM client_responses cr
             LEFT JOIN clients c ON cr.client_id = c.id
             LEFT JOIN team_members tm ON cr.team_member_id = tm.id
@@ -47,18 +47,23 @@ router.post('/', authorize(['admin', 'editor']), async (req, res) => {
     const {
         client_id,
         team_member_id,
+        team_member_ids,
         date,
         review_rating,
         review_comment,
         miscellaneous_work
     } = req.body;
 
+    const primaryTeamMemberId = (Array.isArray(team_member_ids) && team_member_ids.length > 0)
+        ? team_member_ids[0]
+        : team_member_id;
+
     try {
         const result = await pool.query(
             `INSERT INTO client_responses 
-            (client_id, team_member_id, date, review_rating, review_comment, miscellaneous_work)
-            VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-            [client_id, team_member_id, date, review_rating, review_comment, miscellaneous_work]
+            (client_id, team_member_id, team_member_ids, date, review_rating, review_comment, miscellaneous_work)
+            VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+            [client_id, primaryTeamMemberId, team_member_ids || [], date, review_rating, review_comment, miscellaneous_work]
         );
         
         const response = result.rows[0];
@@ -93,20 +98,25 @@ router.put('/:id', authorize(['admin', 'editor']), async (req, res) => {
     const {
         client_id,
         team_member_id,
+        team_member_ids,
         date,
         review_rating,
         review_comment,
         miscellaneous_work
     } = req.body;
 
+    const primaryTeamMemberId = (Array.isArray(team_member_ids) && team_member_ids.length > 0)
+        ? team_member_ids[0]
+        : team_member_id;
+
     try {
         const result = await pool.query(
             `UPDATE client_responses 
-            SET client_id = $1, team_member_id = $2, date = $3, 
-                review_rating = $4, review_comment = $5, miscellaneous_work = $6,
+            SET client_id = $1, team_member_id = $2, team_member_ids = $3, date = $4, 
+                review_rating = $5, review_comment = $6, miscellaneous_work = $7,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = $7 RETURNING *`,
-            [client_id, team_member_id, date, review_rating, review_comment, miscellaneous_work, id]
+            WHERE id = $8 RETURNING *`,
+            [client_id, primaryTeamMemberId, team_member_ids || [], date, review_rating, review_comment, miscellaneous_work, id]
         );
         
         if (result.rows.length === 0) {

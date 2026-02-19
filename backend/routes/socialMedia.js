@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
     try {
         const { startDate, endDate, clientId } = req.query;
         let query = `
-            SELECT sm.*, c.name as client_name, tm.name as team_member_name
+            SELECT sm.*, sm.team_member_ids, c.name as client_name, tm.name as team_member_name
             FROM social_media_kpis sm
             LEFT JOIN clients c ON sm.client_id = c.id
             LEFT JOIN team_members tm ON sm.team_member_id = tm.id
@@ -47,18 +47,22 @@ router.post('/', authorize(['admin', 'editor']), async (req, res) => {
     const {
         client_id,
         team_member_id,
+        team_member_ids,
         date,
         platform,
         quality_score,
         quantity
     } = req.body;
 
+    // determine primary team_member_id for backward compatibility
+    const primaryTeamMemberId = Array.isArray(team_member_ids) && team_member_ids.length > 0 ? team_member_ids[0] : team_member_id;
+
     try {
         const result = await pool.query(
             `INSERT INTO social_media_kpis 
-            (client_id, team_member_id, date, platform, quality_score, quantity)
-            VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-            [client_id, team_member_id, date, platform, quality_score, quantity]
+            (client_id, team_member_id, team_member_ids, date, platform, quality_score, quantity)
+            VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+            [client_id, primaryTeamMemberId, team_member_ids || [], date, platform, quality_score, quantity]
         );
         
         const kpi = result.rows[0];
@@ -93,20 +97,23 @@ router.put('/:id', authorize(['admin', 'editor']), async (req, res) => {
     const {
         client_id,
         team_member_id,
+        team_member_ids,
         date,
         platform,
         quality_score,
         quantity
     } = req.body;
 
+    const primaryTeamMemberId = Array.isArray(team_member_ids) && team_member_ids.length > 0 ? team_member_ids[0] : team_member_id;
+
     try {
         const result = await pool.query(
             `UPDATE social_media_kpis 
-            SET client_id = $1, team_member_id = $2, date = $3, 
-                platform = $4, quality_score = $5, quantity = $6,
+            SET client_id = $1, team_member_id = $2, team_member_ids = $3, date = $4, 
+                platform = $5, quality_score = $6, quantity = $7,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = $7 RETURNING *`,
-            [client_id, team_member_id, date, platform, quality_score, quantity, id]
+            WHERE id = $8 RETURNING *`,
+            [client_id, primaryTeamMemberId, team_member_ids || [], date, platform, quality_score, quantity, id]
         );
         
         if (result.rows.length === 0) {

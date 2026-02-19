@@ -28,6 +28,8 @@ import {
   DialogActions,
   Chip,
   LinearProgress,
+  Avatar,
+  Popover,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -59,13 +61,14 @@ const WebsiteSEOTab = () => {
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({
     client_id: '',
-    team_member_id: '',
+    team_member_ids: [],
     date: new Date(),
     changes_asked: 0,
     blogs_posted: 0,
     updates: 0,
     ranking_issues: false,
     reports_sent: false,
+    ranking_issues_description: '',
     backlinks: 0,
     domain_authority: 50,
     page_authority: 50,
@@ -83,8 +86,8 @@ const WebsiteSEOTab = () => {
   const fetchData = async () => {
     try {
       const params = {
-        startDate: startDate.toISOString().split('T')[0],
-        endDate: endDate.toISOString().split('T')[0],
+        startDate: formatDateOnly(startDate),
+        endDate: formatDateOnly(endDate),
       };
       if (selectedClient) params.clientId = selectedClient;
       
@@ -122,13 +125,14 @@ const WebsiteSEOTab = () => {
       setEditingItem(item);
       setFormData({
         client_id: item.client_id,
-        team_member_id: item.team_member_id,
+        team_member_ids: item.team_member_ids || (item.team_member_id ? [item.team_member_id] : []),
         date: new Date(item.date),
         changes_asked: item.changes_asked,
         blogs_posted: item.blogs_posted,
         updates: item.updates,
         ranking_issues: item.ranking_issues,
         reports_sent: item.reports_sent,
+        ranking_issues_description: item.ranking_issues_description || '',
         backlinks: item.backlinks,
         domain_authority: item.domain_authority,
         page_authority: item.page_authority,
@@ -140,13 +144,14 @@ const WebsiteSEOTab = () => {
       setEditingItem(null);
       setFormData({
         client_id: '',
-        team_member_id: '',
+        team_member_ids: [],
         date: new Date(),
         changes_asked: 0,
         blogs_posted: 0,
         updates: 0,
         ranking_issues: false,
         reports_sent: false,
+        ranking_issues_description: '',
         backlinks: 0,
         domain_authority: 50,
         page_authority: 50,
@@ -163,11 +168,26 @@ const WebsiteSEOTab = () => {
     setEditingItem(null);
   };
 
+  const [rankingDialogOpen, setRankingDialogOpen] = useState(false);
+  const [rankingDialogText, setRankingDialogText] = useState('');
+  const [membersPopoverAnchor, setMembersPopoverAnchor] = useState(null);
+  const [selectedMembersItem, setSelectedMembersItem] = useState(null);
+
+  const openRankingDialog = (text) => {
+    setRankingDialogText(text || '');
+    setRankingDialogOpen(true);
+  };
+
+  const closeRankingDialog = () => {
+    setRankingDialogOpen(false);
+    setRankingDialogText('');
+  };
+
   const handleSubmit = async () => {
     try {
       const payload = {
         ...formData,
-        date: formData.date.toISOString().split('T')[0],
+        date: formatDateOnly(formData.date),
       };
 
       if (editingItem) {
@@ -192,6 +212,21 @@ const WebsiteSEOTab = () => {
         console.error('Error deleting data:', error);
       }
     }
+  };
+
+  const handleOpenMembersPopover = (event, item) => {
+    setMembersPopoverAnchor(event.currentTarget);
+    setSelectedMembersItem(item);
+  };
+
+  const handleCloseMembersPopover = () => {
+    setMembersPopoverAnchor(null);
+    setSelectedMembersItem(null);
+  };
+
+  const getMemberName = (memberId) => {
+    const member = teamMembers.find(m => m.id === memberId);
+    return member ? member.name : `Unknown (${memberId})`;
   };
 
   const calculateStats = () => {
@@ -268,6 +303,17 @@ const WebsiteSEOTab = () => {
           </Grid>
         </Paper>
 
+        {/* Ranking Issue Description Viewer Dialog */}
+        <Dialog open={rankingDialogOpen} onClose={closeRankingDialog} maxWidth="sm" fullWidth>
+          <DialogTitle>Ranking Issue Details</DialogTitle>
+          <DialogContent>
+            <Typography variant="body1">{rankingDialogText || 'No description provided.'}</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={closeRankingDialog}>Close</Button>
+          </DialogActions>
+        </Dialog>
+
         {/* Stats Cards */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
           <Grid item xs={12} sm={6} md={3}>
@@ -275,11 +321,11 @@ const WebsiteSEOTab = () => {
               <CardContent sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <TrendingUpIcon color="primary" sx={{ mr: 1 }} />
-                  <Typography variant="h6">Authority Scores</Typography>
+                  <Typography variant="h6">Page Speed Scores</Typography>
                 </Box>
                 <Box>
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="body2" color="textSecondary">Domain Authority</Typography>
+                    <Typography variant="body2" color="textSecondary">Page Speed on Mobile</Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       <LinearProgress 
                         variant="determinate" 
@@ -292,7 +338,7 @@ const WebsiteSEOTab = () => {
                     </Box>
                   </Box>
                   <Box>
-                    <Typography variant="body2" color="textSecondary">Page Authority</Typography>
+                    <Typography variant="body2" color="textSecondary">Page Speed on the Desktop</Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       <LinearProgress 
                         variant="determinate" 
@@ -421,7 +467,7 @@ const WebsiteSEOTab = () => {
           <Grid item xs={12} md={6}>
             <Paper sx={{ p: 2 }}>
               <Typography variant="h6" gutterBottom>
-                Authority Trends
+                Page Speed Trends
               </Typography>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={data}>
@@ -430,8 +476,8 @@ const WebsiteSEOTab = () => {
                   <YAxis domain={[0, 100]} />
                   <Tooltip />
                   <Legend />
-                  <Line type="monotone" dataKey="domain_authority" stroke="#0A58BF" name="Domain Authority" />
-                  <Line type="monotone" dataKey="page_authority" stroke="#5505A6" name="Page Authority" />
+                  <Line type="monotone" dataKey="domain_authority" stroke="#0A58BF" name="Page Speed on Mobile" />
+                  <Line type="monotone" dataKey="page_authority" stroke="#5505A6" name="Page Speed on the Desktop" />
                 </LineChart>
               </ResponsiveContainer>
             </Paper>
@@ -470,10 +516,12 @@ const WebsiteSEOTab = () => {
                   <TableCell>Client</TableCell>
                   <TableCell>Blogs</TableCell>
                   <TableCell>Backlinks</TableCell>
-                  <TableCell>DA/PA</TableCell>
+                  <TableCell>Page Speed (Mobile/Desktop)</TableCell>
+                  <TableCell>Ranking Issue</TableCell>
                   <TableCell>Keywords</TableCell>
                   <TableCell>Issues</TableCell>
                   <TableCell>Reports</TableCell>
+                  <TableCell>Team Member</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
@@ -486,9 +534,14 @@ const WebsiteSEOTab = () => {
                     <TableCell>{item.backlinks}</TableCell>
                     <TableCell>
                       <Box>
-                        <Typography variant="body2">DA: {item.domain_authority}</Typography>
-                        <Typography variant="body2">PA: {item.page_authority}</Typography>
+                        <Typography variant="body2">Mobile: {item.domain_authority}</Typography>
+                        <Typography variant="body2">Desktop: {item.page_authority}</Typography>
                       </Box>
+                    </TableCell>
+                    <TableCell>
+                      <IconButton size="small" onClick={() => item.ranking_issues ? openRankingDialog(item.ranking_issues_description) : null}>
+                        {item.ranking_issues ? <CheckCircleIcon color="success" /> : <CancelIcon color="error" />}
+                      </IconButton>
                     </TableCell>
                     <TableCell>{item.keyword_pass}</TableCell>
                     <TableCell>
@@ -504,6 +557,27 @@ const WebsiteSEOTab = () => {
                       ) : (
                         <CancelIcon color="error" />
                       )}
+                    </TableCell>
+                    <TableCell>
+                      {(() => {
+                        const memberIds = item.team_member_ids || [];
+                        if (memberIds.length === 0) {
+                          return item.team_member_name || 'N/A';
+                        }
+                        if (memberIds.length === 1) {
+                          return getMemberName(memberIds[0]);
+                        }
+                        return (
+                          <Chip
+                            label={`View Members (${memberIds.length})`}
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                            onClick={(e) => handleOpenMembersPopover(e, item)}
+                            sx={{ cursor: 'pointer' }}
+                          />
+                        );
+                      })()}
                     </TableCell>
                     <TableCell>
                       {canEdit && (
@@ -551,8 +625,9 @@ const WebsiteSEOTab = () => {
                 <FormControl fullWidth>
                   <InputLabel>Team Member</InputLabel>
                   <Select
-                    value={formData.team_member_id}
-                    onChange={(e) => setFormData({ ...formData, team_member_id: e.target.value })}
+                    multiple
+                    value={formData.team_member_ids}
+                    onChange={(e) => setFormData({ ...formData, team_member_ids: e.target.value })}
                     label="Team Member"
                   >
                     {teamMembers.map((member) => (
@@ -603,7 +678,7 @@ const WebsiteSEOTab = () => {
               </Grid>
               
               <Grid item xs={12} md={6}>
-                <Typography gutterBottom>Domain Authority: {formData.domain_authority}</Typography>
+                <Typography gutterBottom>Page Speed on Mobile: {formData.domain_authority}</Typography>
                 <Slider
                   value={formData.domain_authority}
                   onChange={(_, value) => setFormData({ ...formData, domain_authority: value })}
@@ -616,7 +691,7 @@ const WebsiteSEOTab = () => {
               </Grid>
               
               <Grid item xs={12} md={6}>
-                <Typography gutterBottom>Page Authority: {formData.page_authority}</Typography>
+                <Typography gutterBottom>Page Speed on the Desktop: {formData.page_authority}</Typography>
                 <Slider
                   value={formData.page_authority}
                   onChange={(_, value) => setFormData({ ...formData, page_authority: value })}
@@ -682,6 +757,18 @@ const WebsiteSEOTab = () => {
                   label="Ranking Issues"
                 />
               </Grid>
+              {formData.ranking_issues && (
+                <Grid item xs={12} md={12}>
+                  <TextField
+                    fullWidth
+                    label="Ranking Issue Description"
+                    multiline
+                    rows={3}
+                    value={formData.ranking_issues_description}
+                    onChange={(e) => setFormData({ ...formData, ranking_issues_description: e.target.value })}
+                  />
+                </Grid>
+              )}
               
               <Grid item xs={12} md={6}>
                 <FormControlLabel
@@ -703,6 +790,48 @@ const WebsiteSEOTab = () => {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Members Popover */}
+        <Popover
+          open={Boolean(membersPopoverAnchor)}
+          anchorEl={membersPopoverAnchor}
+          onClose={handleCloseMembersPopover}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'center',
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'center',
+          }}
+        >
+          <Paper sx={{ p: 2, minWidth: 250 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+              Team Members
+            </Typography>
+            {selectedMembersItem && (selectedMembersItem.team_member_ids || []).map((memberId, index) => (
+              <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5 }}>
+                <Avatar
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    bgcolor: 'primary.main',
+                    fontSize: '0.75rem',
+                  }}
+                >
+                  {getMemberName(memberId)
+                    .split(' ')
+                    .map(n => n[0])
+                    .join('')
+                    .toUpperCase()}
+                </Avatar>
+                <Typography variant="body2">
+                  {getMemberName(memberId)}
+                </Typography>
+              </Box>
+            ))}
+          </Paper>
+        </Popover>
       </Box>
     </LocalizationProvider>
   );

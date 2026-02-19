@@ -27,6 +27,7 @@ import {
   Rating,
   Avatar,
   TextareaAutosize,
+  Popover,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -60,7 +61,7 @@ const ClientResponsesTab = () => {
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({
     client_id: '',
-
+    team_member_ids: [],
     date: new Date(),
     review_rating: 3,
     review_comment: '',
@@ -68,6 +69,8 @@ const ClientResponsesTab = () => {
   });
   const [miscWorkModalOpen, setMiscWorkModalOpen] = useState(false);
   const [selectedMiscWork, setSelectedMiscWork] = useState(null);
+  const [membersPopoverAnchor, setMembersPopoverAnchor] = useState(null);
+  const [selectedMembersItem, setSelectedMembersItem] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -78,8 +81,8 @@ const ClientResponsesTab = () => {
   const fetchData = async () => {
     try {
       const params = {
-        startDate: startDate.toISOString().split('T')[0],
-        endDate: endDate.toISOString().split('T')[0],
+        startDate: formatDateOnly(startDate),
+        endDate: formatDateOnly(endDate),
       };
       if (selectedClient) params.clientId = selectedClient;
       
@@ -117,7 +120,7 @@ const ClientResponsesTab = () => {
       setEditingItem(item);
       setFormData({
         client_id: item.client_id,
-
+        team_member_ids: item.team_member_ids || (item.team_member_id ? [item.team_member_id] : []),
         date: new Date(item.date),
         review_rating: item.review_rating,
         review_comment: item.review_comment || '',
@@ -127,7 +130,7 @@ const ClientResponsesTab = () => {
       setEditingItem(null);
       setFormData({
         client_id: '',
-
+        team_member_ids: [],
         date: new Date(),
         review_rating: 3,
         review_comment: '',
@@ -146,7 +149,7 @@ const ClientResponsesTab = () => {
     try {
       const payload = {
         ...formData,
-        date: formData.date.toISOString().split('T')[0],
+        date: formatDateOnly(formData.date),
       };
 
       if (editingItem) {
@@ -181,6 +184,32 @@ const ClientResponsesTab = () => {
   const handleCloseMiscWorkModal = () => {
     setMiscWorkModalOpen(false);
     setSelectedMiscWork(null);
+  };
+
+  const handleOpenMembersPopover = (event, item) => {
+    setMembersPopoverAnchor(event.currentTarget);
+    setSelectedMembersItem(item);
+  };
+
+  const handleCloseMembersPopover = () => {
+    setMembersPopoverAnchor(null);
+    setSelectedMembersItem(null);
+  };
+
+  const getMemberName = (memberId) => {
+    const member = teamMembers.find(m => m.id === memberId);
+    return member ? member.name : `Unknown (${memberId})`;
+  };
+
+  const getMembersDisplay = (item) => {
+    const memberIds = item.team_member_ids || [];
+    if (memberIds.length === 0) {
+      return item.team_member_name || 'N/A';
+    }
+    if (memberIds.length === 1) {
+      return getMemberName(memberIds[0]);
+    }
+    return null; // Will show "View Members" button
   };
 
   const calculateStats = () => {
@@ -528,7 +557,27 @@ const ClientResponsesTab = () => {
                         <Chip label="None" size="small" variant="outlined" />
                       )}
                     </TableCell>
-                    <TableCell>{item.team_member_name}</TableCell>
+                    <TableCell>
+                      {(() => {
+                        const memberIds = item.team_member_ids || [];
+                        if (memberIds.length === 0) {
+                          return item.team_member_name || 'N/A';
+                        }
+                        if (memberIds.length === 1) {
+                          return getMemberName(memberIds[0]);
+                        }
+                        return (
+                          <Chip
+                            label={`View Members (${memberIds.length})`}
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                            onClick={(e) => handleOpenMembersPopover(e, item)}
+                            sx={{ cursor: 'pointer' }}
+                          />
+                        );
+                      })()}
+                    </TableCell>
                     <TableCell>
                       {canEdit && (
                         <>
@@ -566,6 +615,24 @@ const ClientResponsesTab = () => {
                     {clients.map((client) => (
                       <MenuItem key={client.id} value={client.id}>
                         {client.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel>Team Member</InputLabel>
+                  <Select
+                    multiple
+                    value={formData.team_member_ids}
+                    onChange={(e) => setFormData({ ...formData, team_member_ids: e.target.value })}
+                    label="Team Member"
+                  >
+                    {teamMembers.map((member) => (
+                      <MenuItem key={member.id} value={member.id}>
+                        {member.name}
                       </MenuItem>
                     ))}
                   </Select>
@@ -710,6 +777,48 @@ const ClientResponsesTab = () => {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Members Popover */}
+        <Popover
+          open={Boolean(membersPopoverAnchor)}
+          anchorEl={membersPopoverAnchor}
+          onClose={handleCloseMembersPopover}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'center',
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'center',
+          }}
+        >
+          <Paper sx={{ p: 2, minWidth: 250 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+              Team Members
+            </Typography>
+            {selectedMembersItem && (selectedMembersItem.team_member_ids || []).map((memberId, index) => (
+              <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5 }}>
+                <Avatar
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    bgcolor: 'primary.main',
+                    fontSize: '0.75rem',
+                  }}
+                >
+                  {getMemberName(memberId)
+                    .split(' ')
+                    .map(n => n[0])
+                    .join('')
+                    .toUpperCase()}
+                </Avatar>
+                <Typography variant="body2">
+                  {getMemberName(memberId)}
+                </Typography>
+              </Box>
+            ))}
+          </Paper>
+        </Popover>
       </Box>
     </LocalizationProvider>
   );

@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
     try {
         const { startDate, endDate, clientId } = req.query;
         let query = `
-            SELECT a.*, c.name as client_name, tm.name as team_member_name
+            SELECT a.*, a.team_member_ids, c.name as client_name, tm.name as team_member_name
             FROM ads_kpis a
             LEFT JOIN clients c ON a.client_id = c.id
             LEFT JOIN team_members tm ON a.team_member_id = tm.id
@@ -47,6 +47,7 @@ router.post('/', authorize(['admin', 'editor']), async (req, res) => {
     const {
         client_id,
         team_member_id,
+        team_member_ids,
         date,
         platform,
         cost_per_lead,
@@ -61,15 +62,17 @@ router.post('/', authorize(['admin', 'editor']), async (req, res) => {
         tracking
     } = req.body;
 
+    const primaryTeamMemberId = Array.isArray(team_member_ids) && team_member_ids.length > 0 ? team_member_ids[0] : team_member_id;
+
     try {
         const result = await pool.query(
             `INSERT INTO ads_kpis 
-            (client_id, team_member_id, date, platform, cost_per_lead, quality_of_ads,
+            (client_id, team_member_id, team_member_ids, date, platform, cost_per_lead, quality_of_ads,
              lead_quality, closing_ratio, quantity_leads, keyword_refinement,
              cost_per_click, conversions, closing, tracking)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *`,
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *`,
             [
-                client_id, team_member_id, date, platform, cost_per_lead, quality_of_ads,
+                client_id, primaryTeamMemberId, team_member_ids || [], date, platform, cost_per_lead, quality_of_ads,
                 lead_quality, closing_ratio, quantity_leads, keyword_refinement,
                 cost_per_click, conversions, closing, tracking
             ]
@@ -107,6 +110,7 @@ router.put('/:id', authorize(['admin', 'editor']), async (req, res) => {
     const {
         client_id,
         team_member_id,
+        team_member_ids,
         date,
         platform,
         cost_per_lead,
@@ -121,17 +125,19 @@ router.put('/:id', authorize(['admin', 'editor']), async (req, res) => {
         tracking
     } = req.body;
 
+    const primaryTeamMemberId = Array.isArray(team_member_ids) && team_member_ids.length > 0 ? team_member_ids[0] : team_member_id;
+
     try {
         const result = await pool.query(
             `UPDATE ads_kpis 
-            SET client_id = $1, team_member_id = $2, date = $3, platform = $4,
-                cost_per_lead = $5, quality_of_ads = $6, lead_quality = $7,
-                closing_ratio = $8, quantity_leads = $9, keyword_refinement = $10,
-                cost_per_click = $11, conversions = $12, closing = $13, tracking = $14,
+            SET client_id = $1, team_member_id = $2, team_member_ids = $3, date = $4, platform = $5,
+                cost_per_lead = $6, quality_of_ads = $7, lead_quality = $8,
+                closing_ratio = $9, quantity_leads = $10, keyword_refinement = $11,
+                cost_per_click = $12, conversions = $13, closing = $14, tracking = $15,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = $15 RETURNING *`,
+            WHERE id = $16 RETURNING *`,
             [
-                client_id, team_member_id, date, platform, cost_per_lead, quality_of_ads,
+                client_id, primaryTeamMemberId, team_member_ids || [], date, platform, cost_per_lead, quality_of_ads,
                 lead_quality, closing_ratio, quantity_leads, keyword_refinement,
                 cost_per_click, conversions, closing, tracking, id
             ]

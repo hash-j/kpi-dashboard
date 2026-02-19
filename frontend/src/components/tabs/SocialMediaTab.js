@@ -24,6 +24,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Chip,
+  Avatar,
+  Popover,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -52,9 +55,11 @@ const SocialMediaTab = () => {
   const [selectedClient, setSelectedClient] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [membersPopoverAnchor, setMembersPopoverAnchor] = useState(null);
+  const [selectedMembersItem, setSelectedMembersItem] = useState(null);
   const [formData, setFormData] = useState({
     client_id: '',
-    team_member_id: '',
+    team_member_ids: [],
     date: new Date(),
     platform: 'Instagram',
     quality_score: 5,
@@ -70,8 +75,8 @@ const SocialMediaTab = () => {
   const fetchData = async () => {
     try {
       const params = {
-        startDate: startDate.toISOString().split('T')[0],
-        endDate: endDate.toISOString().split('T')[0],
+        startDate: formatDateOnly(startDate),
+        endDate: formatDateOnly(endDate),
       };
       if (selectedClient) params.clientId = selectedClient;
       
@@ -109,7 +114,7 @@ const SocialMediaTab = () => {
       setEditingItem(item);
       setFormData({
         client_id: item.client_id,
-        team_member_id: item.team_member_id,
+        team_member_ids: item.team_member_ids || (item.team_member_id ? [item.team_member_id] : []),
         date: new Date(item.date),
         platform: item.platform,
         quality_score: item.quality_score,
@@ -119,7 +124,7 @@ const SocialMediaTab = () => {
       setEditingItem(null);
       setFormData({
         client_id: '',
-        team_member_id: '',
+        team_member_ids: [],
         date: new Date(),
         platform: 'Instagram',
         quality_score: 5,
@@ -138,7 +143,7 @@ const SocialMediaTab = () => {
     try {
       const payload = {
         ...formData,
-        date: formData.date.toISOString().split('T')[0],
+        date: formatDateOnly(formData.date),
       };
 
       if (editingItem) {
@@ -163,6 +168,21 @@ const SocialMediaTab = () => {
         console.error('Error deleting data:', error);
       }
     }
+  };
+
+  const handleOpenMembersPopover = (event, item) => {
+    setMembersPopoverAnchor(event.currentTarget);
+    setSelectedMembersItem(item);
+  };
+
+  const handleCloseMembersPopover = () => {
+    setMembersPopoverAnchor(null);
+    setSelectedMembersItem(null);
+  };
+
+  const getMemberName = (memberId) => {
+    const member = teamMembers.find(m => m.id === memberId);
+    return member ? member.name : `Unknown (${memberId})`;
   };
 
   const calculatePlatformStats = () => {
@@ -348,7 +368,27 @@ const SocialMediaTab = () => {
                       />
                     </TableCell>
                     <TableCell>{item.quantity}</TableCell>
-                    <TableCell>{item.team_member_name}</TableCell>
+                    <TableCell>
+                      {(() => {
+                        const memberIds = item.team_member_ids || [];
+                        if (memberIds.length === 0) {
+                          return item.team_member_name || 'N/A';
+                        }
+                        if (memberIds.length === 1) {
+                          return getMemberName(memberIds[0]);
+                        }
+                        return (
+                          <Chip
+                            label={`View Members (${memberIds.length})`}
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                            onClick={(e) => handleOpenMembersPopover(e, item)}
+                            sx={{ cursor: 'pointer' }}
+                          />
+                        );
+                      })()}
+                    </TableCell>
                     <TableCell>
                       {canEdit && (
                         <>
@@ -395,8 +435,9 @@ const SocialMediaTab = () => {
                 <FormControl fullWidth>
                   <InputLabel>Team Member</InputLabel>
                   <Select
-                    value={formData.team_member_id}
-                    onChange={(e) => setFormData({ ...formData, team_member_id: e.target.value })}
+                    multiple
+                    value={formData.team_member_ids}
+                    onChange={(e) => setFormData({ ...formData, team_member_ids: e.target.value })}
                     label="Team Member"
                   >
                     {teamMembers.map((member) => (
@@ -461,6 +502,48 @@ const SocialMediaTab = () => {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Members Popover */}
+        <Popover
+          open={Boolean(membersPopoverAnchor)}
+          anchorEl={membersPopoverAnchor}
+          onClose={handleCloseMembersPopover}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'center',
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'center',
+          }}
+        >
+          <Paper sx={{ p: 2, minWidth: 250 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+              Team Members
+            </Typography>
+            {selectedMembersItem && (selectedMembersItem.team_member_ids || []).map((memberId, index) => (
+              <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5 }}>
+                <Avatar
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    bgcolor: 'primary.main',
+                    fontSize: '0.75rem',
+                  }}
+                >
+                  {getMemberName(memberId)
+                    .split(' ')
+                    .map(n => n[0])
+                    .join('')
+                    .toUpperCase()}
+                </Avatar>
+                <Typography variant="body2">
+                  {getMemberName(memberId)}
+                </Typography>
+              </Box>
+            ))}
+          </Paper>
+        </Popover>
       </Box>
     </LocalizationProvider>
   );

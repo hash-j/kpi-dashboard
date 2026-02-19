@@ -83,8 +83,8 @@ const TeamTab = () => {
   const fetchData = async () => {
     try {
       const params = {
-        startDate: startDate.toISOString().split('T')[0],
-        endDate: endDate.toISOString().split('T')[0],
+        startDate: formatDateOnly(startDate),
+        endDate: formatDateOnly(endDate),
       };
       if (selectedMember) params.teamMemberId = selectedMember;
       
@@ -144,7 +144,7 @@ const TeamTab = () => {
     try {
       const payload = {
         ...formData,
-        date: formData.date.toISOString().split('T')[0],
+        date: formatDateOnly(formData.date),
       };
 
       if (editingItem) {

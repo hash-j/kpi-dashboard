@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Grid,
   Paper,
@@ -49,6 +50,7 @@ import { formatDateOnly } from '../../utils/dateFormatter';
 import { AuthContext } from '../../context/AuthContext';
 
 const WebsiteSEOTab = () => {
+  const navigate = useNavigate();
   const { user } = useContext(AuthContext);
   const canEdit = user?.role === 'admin' || user?.role === 'editor';
   const [data, setData] = useState([]);
@@ -293,7 +295,7 @@ const WebsiteSEOTab = () => {
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
-                  onClick={() => handleOpenDialog()}
+                  onClick={() => navigate('/add-seo-entry')}
                   fullWidth
                 >
                   Add SEO Entry

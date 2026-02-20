@@ -41,6 +41,9 @@ import {
   Cancel as CancelIcon,
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
+  LocationOn as LocationOnIcon,
+  EditNote as EditNoteIcon,
+  ListAlt as ListAltIcon,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -274,6 +277,9 @@ const WebsiteSEOTab = () => {
       avgSiteHealth: data.reduce((sum, item) => sum + (item.site_health || 0), 0) / data.length,
       reportsSentCount: data.filter(item => item.reports_sent).length,
       rankingIssuesCount: data.filter(item => item.ranking_issues).length,
+      totalGMBUpdates: data.reduce((sum, item) => sum + (item.gmb_updates || 0), 0),
+      totalGMBChanges: data.reduce((sum, item) => sum + (item.gmb_changes_count || 0), 0),
+      totalChangesAsked: data.reduce((sum, item) => sum + (item.changes_asked || 0), 0),
     };
     
     return stats;
@@ -458,6 +464,69 @@ const WebsiteSEOTab = () => {
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
                     Total Issues
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={2.4}>
+            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'linear-gradient(135deg, rgba(255, 152, 0, 0.1) 0%, rgba(255, 193, 7, 0.1) 100%)' }}>
+              <CardContent sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <LocationOnIcon sx={{ color: '#ff9800', mr: 0.5 }} />
+                  <Typography variant="h6" gutterBottom sx={{ mb: 0 }}>
+                    GMB Updates
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="h4" gutterBottom sx={{ color: '#ff9800' }}>
+                    {stats.totalGMBUpdates || 0}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Total Updates
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={2.4}>
+            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(0, 150, 136, 0.1) 100%)' }}>
+              <CardContent sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <EditNoteIcon sx={{ color: '#2196f3', mr: 0.5 }} />
+                  <Typography variant="h6" gutterBottom sx={{ mb: 0 }}>
+                    GMB Changes
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="h4" gutterBottom sx={{ color: '#2196f3' }}>
+                    {stats.totalGMBChanges || 0}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Changes Count
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={2.4}>
+            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(56, 142, 60, 0.1) 100%)' }}>
+              <CardContent sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <ListAltIcon sx={{ color: '#4caf50', mr: 0.5 }} />
+                  <Typography variant="h6" gutterBottom sx={{ mb: 0 }}>
+                    Changes Asked
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="h4" gutterBottom sx={{ color: '#4caf50' }}>
+                    {stats.totalChangesAsked || 0}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Total Items
                   </Typography>
                 </Box>
               </CardContent>

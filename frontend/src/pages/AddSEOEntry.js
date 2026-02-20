@@ -45,6 +45,8 @@ const AddSEOEntry = () => {
     team_member_ids: [],
     date: new Date(),
     changes_asked: 0,
+    changes_asked_details: [],
+    changes_asked_statuses: [],
     blogs_posted: 0,
     updates: 0,
     ranking_issues: false,
@@ -56,6 +58,9 @@ const AddSEOEntry = () => {
     keyword_pass: 0,
     site_health: 100,
     issues: 0,
+    gmb_updates: 0,
+    gmb_changes_count: 0,
+    gmb_changes_details: [],
   });
 
   useEffect(() => {
@@ -68,6 +73,8 @@ const AddSEOEntry = () => {
         team_member_ids: editingItem.team_member_ids || (editingItem.team_member_id ? [editingItem.team_member_id] : []),
         date: new Date(editingItem.date),
         changes_asked: editingItem.changes_asked,
+        changes_asked_details: editingItem.changes_asked_details || [],
+        changes_asked_statuses: editingItem.changes_asked_statuses || [],
         blogs_posted: editingItem.blogs_posted,
         updates: editingItem.updates,
         ranking_issues: editingItem.ranking_issues,
@@ -79,6 +86,9 @@ const AddSEOEntry = () => {
         keyword_pass: editingItem.keyword_pass,
         site_health: editingItem.site_health,
         issues: editingItem.issues,
+        gmb_updates: editingItem.gmb_updates || 0,
+        gmb_changes_count: editingItem.gmb_changes_count || 0,
+        gmb_changes_details: editingItem.gmb_changes_details || [],
       });
     }
   }, [editingItem]);
@@ -261,12 +271,105 @@ const AddSEOEntry = () => {
                 <Grid item xs={12} md={6}>
                   <TextField
                     fullWidth
-                    label="Changes Asked"
+                    label="GMB Updates"
                     type="number"
-                    value={formData.changes_asked}
-                    onChange={(e) => setFormData({ ...formData, changes_asked: parseInt(e.target.value) || 0 })}
+                    value={formData.gmb_updates}
+                    onChange={(e) => setFormData({ ...formData, gmb_updates: parseInt(e.target.value) || 0 })}
                   />
                 </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Changes Asked (count)"
+                    type="number"
+                    value={formData.changes_asked}
+                    onChange={(e) => {
+                      const count = parseInt(e.target.value) || 0;
+                      const details = Array.from({ length: count }, (_, i) => formData.changes_asked_details[i] || '');
+                      const statuses = Array.from({ length: count }, (_, i) => formData.changes_asked_statuses[i] || 'Not Done');
+                      setFormData({ ...formData, changes_asked: count, changes_asked_details: details, changes_asked_statuses: statuses });
+                    }}
+                    helperText="Enter number of changes asked to provide details and status"
+                  />
+                </Grid>
+
+                {formData.changes_asked > 0 && (
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+                      <Box sx={{ 
+                        width: 4, 
+                        height: 24, 
+                        bgcolor: 'primary.main', 
+                        borderRadius: 1 
+                      }} />
+                      <Typography variant="h6" sx={{ fontWeight: 700, color: '#fff', m: 0 }}>Changes Asked Details & Status</Typography>
+                      <Chip label={`${formData.changes_asked} items`} size="small" color="primary" variant="outlined" sx={{ ml: 'auto' }} />
+                    </Box>
+                    <Grid container spacing={2}>
+                      {Array.from({ length: formData.changes_asked }).map((_, idx) => {
+                        const status = formData.changes_asked_statuses[idx] || 'Not Done';
+                        const getStatusColor = () => {
+                          if (status === 'Done') return { bg: 'rgba(76, 175, 80, 0.2)', border: '2px solid #4caf50', shadow: '0 0 12px rgba(76, 175, 80, 0.3)' };
+                          if (status === 'Working on it') return { bg: 'rgba(255, 193, 7, 0.2)', border: '2px solid #ffc107', shadow: '0 0 12px rgba(255, 193, 7, 0.3)' };
+                          return { bg: 'rgba(244, 67, 54, 0.2)', border: '2px solid #f44336', shadow: '0 0 12px rgba(244, 67, 54, 0.3)' };
+                        };
+                        const colors = getStatusColor();
+                        return (
+                          <Grid item xs={12} md={6} key={idx}>
+                            <Box sx={{ 
+                              display: 'flex', 
+                              gap: 1, 
+                              alignItems: 'center',
+                              p: 2.5,
+                              bgcolor: colors.bg,
+                              border: colors.border,
+                              borderRadius: 1.5,
+                              boxShadow: colors.shadow,
+                              transition: 'all 0.3s ease, box-shadow 0.3s ease',
+                              '&:hover': {
+                                transform: 'translateY(-2px)',
+                                boxShadow: colors.shadow ? colors.shadow.replace('12px', '16px') : ''
+                              }
+                            }}>
+                              <TextField
+                                placeholder={`Change ${idx + 1}`}
+                                value={formData.changes_asked_details[idx] || ''}
+                                onChange={(e) => {
+                                  const newDetails = [...formData.changes_asked_details];
+                                  newDetails[idx] = e.target.value;
+                                  setFormData({ ...formData, changes_asked_details: newDetails });
+                                }}
+                                variant="standard"
+                                sx={{ flex: 1, mb: 0 }}
+                                inputProps={{ style: { fontSize: '0.95rem' } }}
+                              />
+                              <Select
+                                value={status}
+                                onChange={(e) => {
+                                  const newStatuses = [...formData.changes_asked_statuses];
+                                  newStatuses[idx] = e.target.value;
+                                  setFormData({ ...formData, changes_asked_statuses: newStatuses });
+                                }}
+                                variant="standard"
+                                sx={{ 
+                                  minWidth: 130,
+                                  '& .MuiSelect-select': {
+                                    paddingBottom: 0
+                                  }
+                                }}
+                              >
+                                <MenuItem value="Done">Done</MenuItem>
+                                <MenuItem value="Working on it">Working on it</MenuItem>
+                                <MenuItem value="Not Done">Not Done</MenuItem>
+                              </Select>
+                            </Box>
+                          </Grid>
+                        );
+                      })}
+                    </Grid>
+                  </Grid>
+                )}
 
                 <Grid item xs={12} md={6}>
                   <TextField
@@ -389,6 +492,45 @@ const AddSEOEntry = () => {
                       onChange={(e) => setFormData({ ...formData, ranking_issues_description: e.target.value })}
                       placeholder="Describe the ranking issues you encountered..."
                     />
+                  </Grid>
+                )}
+
+                {/* GMB Changes Count */}
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="GMB Changes (count)"
+                    type="number"
+                    value={formData.gmb_changes_count}
+                    onChange={(e) => {
+                      const count = parseInt(e.target.value) || 0;
+                      const details = Array.from({ length: count }, (_, i) => formData.gmb_changes_details[i] || '');
+                      setFormData({ ...formData, gmb_changes_count: count, gmb_changes_details: details });
+                    }}
+                    helperText="Enter number of GMB changes to provide details for"
+                  />
+                </Grid>
+
+                {/* Dynamic GMB Changes Details */}
+                {formData.gmb_changes_count > 0 && (
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle1" sx={{ mb: 1 }}>GMB Changes Details</Typography>
+                    <Grid container spacing={2}>
+                      {Array.from({ length: formData.gmb_changes_count }).map((_, idx) => (
+                        <Grid item xs={12} md={6} key={idx}>
+                          <TextField
+                            fullWidth
+                            label={`Change ${idx + 1}`}
+                            value={formData.gmb_changes_details[idx] || ''}
+                            onChange={(e) => {
+                              const newDetails = [...formData.gmb_changes_details];
+                              newDetails[idx] = e.target.value;
+                              setFormData({ ...formData, gmb_changes_details: newDetails });
+                            }}
+                          />
+                        </Grid>
+                      ))}
+                    </Grid>
                   </Grid>
                 )}
 

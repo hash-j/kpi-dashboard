@@ -36,6 +36,7 @@ import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  Visibility as VisibilityIcon,
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
   TrendingUp as TrendingUpIcon,
@@ -77,6 +78,11 @@ const WebsiteSEOTab = () => {
     keyword_pass: 0,
     site_health: 100,
     issues: 0,
+    gmb_updates: 0,
+    gmb_changes_count: 0,
+    gmb_changes_details: [],
+    changes_asked_details: [],
+    changes_asked_statuses: [],
   });
 
   useEffect(() => {
@@ -130,6 +136,8 @@ const WebsiteSEOTab = () => {
         team_member_ids: item.team_member_ids || (item.team_member_id ? [item.team_member_id] : []),
         date: new Date(item.date),
         changes_asked: item.changes_asked,
+        changes_asked_details: item.changes_asked_details || [],
+        changes_asked_statuses: item.changes_asked_statuses || [],
         blogs_posted: item.blogs_posted,
         updates: item.updates,
         ranking_issues: item.ranking_issues,
@@ -141,6 +149,9 @@ const WebsiteSEOTab = () => {
         keyword_pass: item.keyword_pass,
         site_health: item.site_health,
         issues: item.issues,
+        gmb_updates: item.gmb_updates || 0,
+        gmb_changes_count: item.gmb_changes_count || 0,
+        gmb_changes_details: item.gmb_changes_details || [],
       });
     } else {
       setEditingItem(null);
@@ -149,6 +160,8 @@ const WebsiteSEOTab = () => {
         team_member_ids: [],
         date: new Date(),
         changes_asked: 0,
+        changes_asked_details: [],
+        changes_asked_statuses: [],
         blogs_posted: 0,
         updates: 0,
         ranking_issues: false,
@@ -160,6 +173,11 @@ const WebsiteSEOTab = () => {
         keyword_pass: 0,
         site_health: 100,
         issues: 0,
+        gmb_updates: 0,
+        gmb_changes_count: 0,
+        gmb_changes_details: [],
+        changes_asked_details: [],
+        changes_asked_statuses: [],
       });
     }
     setDialogOpen(true);
@@ -174,6 +192,8 @@ const WebsiteSEOTab = () => {
   const [rankingDialogText, setRankingDialogText] = useState('');
   const [membersPopoverAnchor, setMembersPopoverAnchor] = useState(null);
   const [selectedMembersItem, setSelectedMembersItem] = useState(null);
+  const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
+  const [selectedDetailsItem, setSelectedDetailsItem] = useState(null);
 
   const openRankingDialog = (text) => {
     setRankingDialogText(text || '');
@@ -183,6 +203,16 @@ const WebsiteSEOTab = () => {
   const closeRankingDialog = () => {
     setRankingDialogOpen(false);
     setRankingDialogText('');
+  };
+
+  const handleOpenViewDetails = (item) => {
+    setSelectedDetailsItem(item);
+    setViewDetailsOpen(true);
+  };
+
+  const handleCloseViewDetails = () => {
+    setViewDetailsOpen(false);
+    setSelectedDetailsItem(null);
   };
 
   const handleSubmit = async () => {
@@ -516,14 +546,10 @@ const WebsiteSEOTab = () => {
                 <TableRow>
                   <TableCell>Date</TableCell>
                   <TableCell>Client</TableCell>
+                  <TableCell>Team Member</TableCell>
+                  <TableCell>Ranking Issue</TableCell>
                   <TableCell>Blogs</TableCell>
                   <TableCell>Backlinks</TableCell>
-                  <TableCell>Page Speed (Mobile/Desktop)</TableCell>
-                  <TableCell>Ranking Issue</TableCell>
-                  <TableCell>Keywords</TableCell>
-                  <TableCell>Issues</TableCell>
-                  <TableCell>Reports</TableCell>
-                  <TableCell>Team Member</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
@@ -532,34 +558,6 @@ const WebsiteSEOTab = () => {
                   <TableRow key={item.id}>
                     <TableCell>{item.date}</TableCell>
                     <TableCell>{item.client_name}</TableCell>
-                    <TableCell>{item.blogs_posted}</TableCell>
-                    <TableCell>{item.backlinks}</TableCell>
-                    <TableCell>
-                      <Box>
-                        <Typography variant="body2">Mobile: {item.domain_authority}</Typography>
-                        <Typography variant="body2">Desktop: {item.page_authority}</Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <IconButton size="small" onClick={() => item.ranking_issues ? openRankingDialog(item.ranking_issues_description) : null}>
-                        {item.ranking_issues ? <CheckCircleIcon color="success" /> : <CancelIcon color="error" />}
-                      </IconButton>
-                    </TableCell>
-                    <TableCell>{item.keyword_pass}</TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={item.issues} 
-                        size="small" 
-                        color={item.issues > 5 ? "error" : item.issues > 0 ? "warning" : "success"}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      {item.reports_sent ? (
-                        <CheckCircleIcon color="success" />
-                      ) : (
-                        <CancelIcon color="error" />
-                      )}
-                    </TableCell>
                     <TableCell>
                       {(() => {
                         const memberIds = item.team_member_ids || [];
@@ -582,13 +580,23 @@ const WebsiteSEOTab = () => {
                       })()}
                     </TableCell>
                     <TableCell>
+                      <IconButton size="small" onClick={() => item.ranking_issues ? openRankingDialog(item.ranking_issues_description) : null}>
+                        {item.ranking_issues ? <CheckCircleIcon color="success" /> : <CancelIcon color="error" />}
+                      </IconButton>
+                    </TableCell>
+                    <TableCell>{item.blogs_posted}</TableCell>
+                    <TableCell>{item.backlinks}</TableCell>
+                    <TableCell>
+                      <IconButton size="small" onClick={() => handleOpenViewDetails(item)} title="View details">
+                        <VisibilityIcon fontSize="small" />
+                      </IconButton>
                       {canEdit && (
                         <>
-                          <IconButton size="small" onClick={() => handleOpenDialog(item)}>
-                            <EditIcon />
+                          <IconButton size="small" onClick={() => handleOpenDialog(item)} title="Edit">
+                            <EditIcon fontSize="small" />
                           </IconButton>
-                          <IconButton size="small" onClick={() => handleDelete(item.id)}>
-                            <DeleteIcon />
+                          <IconButton size="small" onClick={() => handleDelete(item.id)} title="Delete">
+                            <DeleteIcon fontSize="small" />
                           </IconButton>
                         </>
                       )}
@@ -672,6 +680,16 @@ const WebsiteSEOTab = () => {
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
+                  label="GMB Updates"
+                  type="number"
+                  value={formData.gmb_updates}
+                  onChange={(e) => setFormData({ ...formData, gmb_updates: parseInt(e.target.value) || 0 })}
+                />
+              </Grid>
+              
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
                   label="Keyword Ranking"
                   type="number"
                   value={formData.keyword_pass}
@@ -708,12 +726,103 @@ const WebsiteSEOTab = () => {
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
-                  label="Changes Asked"
+                  label="Changes Asked (count)"
                   type="number"
                   value={formData.changes_asked}
-                  onChange={(e) => setFormData({ ...formData, changes_asked: parseInt(e.target.value) || 0 })}
+                  onChange={(e) => {
+                    const count = parseInt(e.target.value) || 0;
+                    const details = Array.from({ length: count }, (_, i) => formData.changes_asked_details[i] || '');
+                    const statuses = Array.from({ length: count }, (_, i) => formData.changes_asked_statuses[i] || 'Not Done');
+                    setFormData({ ...formData, changes_asked: count, changes_asked_details: details, changes_asked_statuses: statuses });
+                  }}
+                  helperText="Enter number of changes asked to provide details and status"
                 />
               </Grid>
+
+              {formData.changes_asked > 0 && (
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+                    <Box sx={{ width: 4, height: 24, bgcolor: 'primary.main', borderRadius: 1 }} />
+                    <Typography variant="h6" sx={{ fontWeight: 700, color: '#fff', m: 0 }}>Changes Asked Details & Status</Typography>
+                    <Chip label={`${formData.changes_asked} items`} size="small" color="primary" variant="outlined" sx={{ ml: 'auto' }} />
+                  </Box>
+                  <Grid container spacing={2}>
+                    {Array.from({ length: formData.changes_asked }).map((_, idx) => {
+                      const status = formData.changes_asked_statuses[idx] || 'Not Done';
+                      const getStatusColor = () => {
+                        if (status === 'Done') return { bg: 'rgba(76, 175, 80, 0.2)', border: '2px solid #4caf50', shadow: '0 0 12px rgba(76, 175, 80, 0.3)' };
+                        if (status === 'Working on it') return { bg: 'rgba(255, 193, 7, 0.2)', border: '2px solid #ffc107', shadow: '0 0 12px rgba(255, 193, 7, 0.3)' };
+                        return { bg: 'rgba(244, 67, 54, 0.2)', border: '2px solid #f44336', shadow: '0 0 12px rgba(244, 67, 54, 0.3)' };
+                      };
+                      const colors = getStatusColor();
+                      return (
+                        <Grid item xs={12} md={6} key={idx}>
+                          <Box sx={{ 
+                            display: 'flex', 
+                            gap: 1, 
+                            alignItems: 'center',
+                            p: 2.5,
+                            bgcolor: colors.bg,
+                            border: colors.border,
+                            borderRadius: 1.5,
+                            boxShadow: colors.shadow,
+                            transition: 'all 0.3s ease, box-shadow 0.3s ease',
+                            '&:hover': {
+                              transform: 'translateY(-2px)',
+                              boxShadow: colors.shadow ? colors.shadow.replace('12px', '16px') : ''
+                            }
+                          }}>
+                            <TextField
+                              placeholder={`Describe change ${idx + 1}...`}
+                              value={formData.changes_asked_details[idx] || ''}
+                              onChange={(e) => {
+                                const newDetails = [...formData.changes_asked_details];
+                                newDetails[idx] = e.target.value;
+                                setFormData({ ...formData, changes_asked_details: newDetails });
+                              }}
+                              variant="standard"
+                              fullWidth
+                              sx={{ 
+                                flex: 1, 
+                                mb: 0, 
+                                '& input': { 
+                                  fontSize: '0.95rem',
+                                  fontWeight: 500
+                                },
+                                '& input::placeholder': {
+                                  opacity: 0.6
+                                }
+                              }}
+                              inputProps={{ style: { fontSize: '0.95rem' } }}
+                            />
+                            <Select
+                              value={status}
+                              onChange={(e) => {
+                                const newStatuses = [...formData.changes_asked_statuses];
+                                newStatuses[idx] = e.target.value;
+                                setFormData({ ...formData, changes_asked_statuses: newStatuses });
+                              }}
+                              variant="standard"
+                              sx={{ 
+                                minWidth: 150,
+                                '& .MuiSelect-select': {
+                                  paddingBottom: 0,
+                                  fontWeight: 600,
+                                  fontSize: '0.95rem'
+                                }
+                              }}
+                            >
+                              <MenuItem value="Done">Done</MenuItem>
+                              <MenuItem value="Working on it">Working on it</MenuItem>
+                              <MenuItem value="Not Done">Not Done</MenuItem>
+                            </Select>
+                          </Box>
+                        </Grid>
+                      );
+                    })}
+                  </Grid>
+                </Grid>
+              )}
               
               <Grid item xs={12} md={6}>
                 <TextField
@@ -772,6 +881,45 @@ const WebsiteSEOTab = () => {
                 </Grid>
               )}
               
+              {/* GMB Changes Count */}
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="GMB Changes (count)"
+                  type="number"
+                  value={formData.gmb_changes_count}
+                  onChange={(e) => {
+                    const count = parseInt(e.target.value) || 0;
+                    const details = Array.from({ length: count }, (_, i) => formData.gmb_changes_details[i] || '');
+                    setFormData({ ...formData, gmb_changes_count: count, gmb_changes_details: details });
+                  }}
+                  helperText="Enter number of GMB changes to provide details for"
+                />
+              </Grid>
+
+              {/* Dynamic GMB Changes Details */}
+              {formData.gmb_changes_count > 0 && (
+                <Grid item xs={12}>
+                  <Typography variant="subtitle1" sx={{ mb: 1 }}>GMB Changes Details</Typography>
+                  <Grid container spacing={2}>
+                    {Array.from({ length: formData.gmb_changes_count }).map((_, idx) => (
+                      <Grid item xs={12} md={6} key={idx}>
+                        <TextField
+                          fullWidth
+                          label={`Change ${idx + 1}`}
+                          value={formData.gmb_changes_details[idx] || ''}
+                          onChange={(e) => {
+                            const newDetails = [...formData.gmb_changes_details];
+                            newDetails[idx] = e.target.value;
+                            setFormData({ ...formData, gmb_changes_details: newDetails });
+                          }}
+                        />
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Grid>
+              )}
+
               <Grid item xs={12} md={6}>
                 <FormControlLabel
                   control={
@@ -790,6 +938,140 @@ const WebsiteSEOTab = () => {
             <Button onClick={handleSubmit} variant="contained">
               {editingItem ? 'Update' : 'Add'}
             </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* View Details Modal */}
+        <Dialog open={viewDetailsOpen} onClose={handleCloseViewDetails} maxWidth="md" fullWidth>
+          <DialogTitle sx={{ 
+            fontWeight: 700, 
+            bgcolor: '#0f0f1e', 
+            color: '#fff',
+            fontSize: '1.3rem',
+            pb: 1.5,
+            borderBottom: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            📊 Website & SEO Entry Details
+          </DialogTitle>
+          <DialogContent sx={{ bgcolor: '#1a1a2e', color: '#fff', pt: 3 }}>
+            {selectedDetailsItem && (
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="caption" color="textSecondary">Date</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>{selectedDetailsItem.date}</Typography>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="caption" color="textSecondary">Client</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>{selectedDetailsItem.client_name}</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="caption" color="textSecondary">Team Members</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                    {(() => {
+                      const memberIds = selectedDetailsItem.team_member_ids || [];
+                      if (memberIds.length === 0) return selectedDetailsItem.team_member_name || 'N/A';
+                      return memberIds.map(id => getMemberName(id)).join(', ');
+                    })()}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="caption" color="textSecondary">Blogs Posted</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>{selectedDetailsItem.blogs_posted}</Typography>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="caption" color="textSecondary">Backlinks</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>{selectedDetailsItem.backlinks}</Typography>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="caption" color="textSecondary">Keyword Ranking</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>{selectedDetailsItem.keyword_pass}</Typography>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="caption" color="textSecondary">Updates</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>{selectedDetailsItem.updates}</Typography>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="caption" color="textSecondary">Page Speed (Mobile)</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>{selectedDetailsItem.domain_authority}</Typography>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="caption" color="textSecondary">Page Speed (Desktop)</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>{selectedDetailsItem.page_authority}</Typography>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="caption" color="textSecondary">Site Health</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>{selectedDetailsItem.site_health}%</Typography>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="caption" color="textSecondary">Issues</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>{selectedDetailsItem.issues}</Typography>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="caption" color="textSecondary">Changes Asked</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>{selectedDetailsItem.changes_asked}</Typography>
+                </Grid>
+                {selectedDetailsItem.changes_asked_details && selectedDetailsItem.changes_asked_details.length > 0 && (
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                      <Box sx={{ width: 3, height: 16, bgcolor: '#ffc107', borderRadius: '50%' }} />
+                      <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Changes Details & Status</Typography>
+                    </Box>
+                    <Grid container spacing={1.5}>
+                      {selectedDetailsItem.changes_asked_details.map((detail, idx) => {
+                        const status = selectedDetailsItem.changes_asked_statuses?.[idx] || 'Not Done';
+                        const getStatusColor = () => {
+                          if (status === 'Done') return { bg: 'rgba(76, 175, 80, 0.2)', border: '1px solid #4caf50', color: '#4caf50' };
+                          if (status === 'Working on it') return { bg: 'rgba(255, 193, 7, 0.2)', border: '1px solid #ffc107', color: '#ffc107' };
+                          return { bg: 'rgba(244, 67, 54, 0.2)', border: '1px solid #f44336', color: '#f44336' };
+                        };
+                        const statusColor = getStatusColor();
+                        return (
+                          <Grid item xs={12} md={6} key={idx}>
+                            <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.05)', borderRadius: 1, borderLeft: '4px solid #0A58BF' }}>
+                              <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>{detail}</Typography>
+                              <Chip 
+                                label={status} 
+                                size="small" 
+                                sx={{ 
+                                  bgcolor: statusColor.bg,
+                                  border: statusColor.border,
+                                  color: statusColor.color,
+                                  fontWeight: 600,
+                                  fontSize: '0.75rem'
+                                }}
+                              />
+                            </Box>
+                          </Grid>
+                        );
+                      })}
+                    </Grid>
+                  </Grid>
+                )}
+                <Grid item xs={12} md={6}>
+                  <Typography variant="caption" color="textSecondary">GMB Updates</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>{selectedDetailsItem.gmb_updates || 0}</Typography>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="caption" color="textSecondary">GMB Changes Count</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>{selectedDetailsItem.gmb_changes_count || 0}</Typography>
+                </Grid>
+                {selectedDetailsItem.ranking_issues && (
+                  <Grid item xs={12}>
+                    <Typography variant="caption" color="textSecondary">Ranking Issue Description</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 500, p: 1.5, bgcolor: 'rgba(244,67,54,0.15)', borderRadius: 1, border: '1px solid rgba(244,67,54,0.3)' }}>
+                      {selectedDetailsItem.ranking_issues_description || 'N/A'}
+                    </Typography>
+                  </Grid>
+                )}
+                <Grid item xs={12}>
+                  <Typography variant="caption" color="textSecondary">Reports Sent</Typography>
+                  <Chip label={selectedDetailsItem.reports_sent ? 'Yes' : 'No'} size="small" color={selectedDetailsItem.reports_sent ? 'success' : 'default'} />
+                </Grid>
+              </Grid>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ bgcolor: '#0f0f1e', p: 2 }}>
+            <Button onClick={handleCloseViewDetails} sx={{ color: '#0A58BF' }}>Close</Button>
           </DialogActions>
         </Dialog>
 

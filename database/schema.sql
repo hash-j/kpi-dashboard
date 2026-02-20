@@ -59,6 +59,8 @@ CREATE TABLE IF NOT EXISTS website_seo_kpis (
     team_member_ids TEXT[] DEFAULT '{}',
     date DATE NOT NULL,
     changes_asked INTEGER DEFAULT 0,
+    changes_asked_details TEXT[] DEFAULT '{}',
+    changes_asked_statuses TEXT[] DEFAULT '{}',
     blogs_posted INTEGER DEFAULT 0,
     updates INTEGER DEFAULT 0,
     ranking_issues BOOLEAN DEFAULT FALSE,
@@ -70,6 +72,9 @@ CREATE TABLE IF NOT EXISTS website_seo_kpis (
     keyword_pass INTEGER DEFAULT 0,
     site_health INTEGER DEFAULT 0,
     issues INTEGER DEFAULT 0,
+    gmb_updates INTEGER DEFAULT 0,
+    gmb_changes_count INTEGER DEFAULT 0,
+    gmb_changes_details TEXT[] DEFAULT '{}',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

@@ -53,7 +53,6 @@ router.post('/', authorize(['admin', 'editor']), async (req, res) => {
         changes_asked_details,
         changes_asked_statuses,
         blogs_posted,
-        updates,
         ranking_issues,
         ranking_issues_description,
         reports_sent,
@@ -64,8 +63,9 @@ router.post('/', authorize(['admin', 'editor']), async (req, res) => {
         domain_authority,
         page_authority,
         keyword_pass,
-        site_health,
-        issues
+        keyword_names,
+        keyword_positions,
+        site_health
     } = req.body;
 
     const primaryTeamMemberId = (Array.isArray(team_member_ids) && team_member_ids.length > 0)
@@ -75,14 +75,14 @@ router.post('/', authorize(['admin', 'editor']), async (req, res) => {
     try {
         const result = await pool.query(
             `INSERT INTO website_seo_kpis 
-                (client_id, team_member_id, team_member_ids, date, changes_asked, changes_asked_details, changes_asked_statuses, blogs_posted, updates,
+                (client_id, team_member_id, team_member_ids, date, changes_asked, changes_asked_details, changes_asked_statuses, blogs_posted,
                  ranking_issues, ranking_issues_description, reports_sent, backlinks, gmb_updates, gmb_changes_count, gmb_changes_details, domain_authority, page_authority,
-                 keyword_pass, site_health, issues)
+                 keyword_pass, keyword_names, keyword_positions, site_health)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21) RETURNING *`,
                 [
-                    client_id, primaryTeamMemberId, team_member_ids || [], date, changes_asked, changes_asked_details || [], changes_asked_statuses || [], blogs_posted, updates,
+                    client_id, primaryTeamMemberId, team_member_ids || [], date, changes_asked, changes_asked_details || [], changes_asked_statuses || [], blogs_posted,
                     ranking_issues, ranking_issues_description, reports_sent, backlinks, gmb_updates || 0, gmb_changes_count || 0, gmb_changes_details || [], domain_authority, page_authority,
-                    keyword_pass, site_health, issues
+                    keyword_pass, keyword_names || [], keyword_positions || [], site_health
                 ]
         );
         
@@ -124,7 +124,6 @@ router.put('/:id', authorize(['admin', 'editor']), async (req, res) => {
         changes_asked_details,
         changes_asked_statuses,
         blogs_posted,
-        updates,
         ranking_issues,
         ranking_issues_description,
         reports_sent,
@@ -135,8 +134,9 @@ router.put('/:id', authorize(['admin', 'editor']), async (req, res) => {
         domain_authority,
         page_authority,
         keyword_pass,
-        site_health,
-        issues
+        keyword_names,
+        keyword_positions,
+        site_health
     } = req.body;
 
     const primaryTeamMemberId = (Array.isArray(team_member_ids) && team_member_ids.length > 0)
@@ -147,15 +147,15 @@ router.put('/:id', authorize(['admin', 'editor']), async (req, res) => {
         const result = await pool.query(
             `UPDATE website_seo_kpis 
             SET client_id = $1, team_member_id = $2, team_member_ids = $3, date = $4, changes_asked = $5, changes_asked_details = $6, changes_asked_statuses = $7,
-                blogs_posted = $8, updates = $9, ranking_issues = $10, ranking_issues_description = $11, reports_sent = $12,
-                backlinks = $13, gmb_updates = $14, gmb_changes_count = $15, gmb_changes_details = $16, domain_authority = $17, page_authority = $18,
-                keyword_pass = $19, site_health = $20, issues = $21,
+                blogs_posted = $8, ranking_issues = $9, ranking_issues_description = $10, reports_sent = $11,
+                backlinks = $12, gmb_updates = $13, gmb_changes_count = $14, gmb_changes_details = $15, domain_authority = $16, page_authority = $17,
+                keyword_pass = $18, keyword_names = $19, keyword_positions = $20, site_health = $21,
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = $22 RETURNING *`,
             [
-                client_id, primaryTeamMemberId, team_member_ids || [], date, changes_asked, changes_asked_details || [], changes_asked_statuses || [], blogs_posted, updates,
+                client_id, primaryTeamMemberId, team_member_ids || [], date, changes_asked, changes_asked_details || [], changes_asked_statuses || [], blogs_posted,
                 ranking_issues, ranking_issues_description, reports_sent, backlinks, gmb_updates || 0, gmb_changes_count || 0, gmb_changes_details || [], domain_authority, page_authority,
-                keyword_pass, site_health, issues, id
+                keyword_pass, keyword_names || [], keyword_positions || [], site_health, id
             ]
         );
         

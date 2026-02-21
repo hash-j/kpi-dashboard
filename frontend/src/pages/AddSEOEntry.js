@@ -49,7 +49,6 @@ const AddSEOEntry = () => {
     changes_asked_details: [],
     changes_asked_statuses: [],
     blogs_posted: 0,
-    updates: 0,
     ranking_issues: false,
     reports_sent: false,
     ranking_issues_description: '',
@@ -57,8 +56,9 @@ const AddSEOEntry = () => {
     domain_authority: 50,
     page_authority: 50,
     keyword_pass: 0,
+    keyword_names: [],
+    keyword_positions: [],
     site_health: 100,
-    issues: 0,
     gmb_updates: 0,
     gmb_changes_count: 0,
     gmb_changes_details: [],
@@ -77,7 +77,6 @@ const AddSEOEntry = () => {
         changes_asked_details: editingItem.changes_asked_details || [],
         changes_asked_statuses: editingItem.changes_asked_statuses || [],
         blogs_posted: editingItem.blogs_posted,
-        updates: editingItem.updates,
         ranking_issues: editingItem.ranking_issues,
         reports_sent: editingItem.reports_sent,
         ranking_issues_description: editingItem.ranking_issues_description || '',
@@ -85,8 +84,9 @@ const AddSEOEntry = () => {
         domain_authority: editingItem.domain_authority,
         page_authority: editingItem.page_authority,
         keyword_pass: editingItem.keyword_pass,
+        keyword_names: editingItem.keyword_names || [],
+        keyword_positions: editingItem.keyword_positions || [],
         site_health: editingItem.site_health,
-        issues: editingItem.issues,
         gmb_updates: editingItem.gmb_updates || 0,
         gmb_changes_count: editingItem.gmb_changes_count || 0,
         gmb_changes_details: editingItem.gmb_changes_details || [],
@@ -262,12 +262,61 @@ const AddSEOEntry = () => {
                 <Grid item xs={12} md={6}>
                   <TextField
                     fullWidth
-                    label="Keyword Ranking"
+                    label="Keyword Ranking (count)"
                     type="number"
                     value={formData.keyword_pass}
-                    onChange={(e) => setFormData({ ...formData, keyword_pass: parseInt(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      const count = parseInt(e.target.value) || 0;
+                      const names = Array.from({ length: count }, (_, i) => formData.keyword_names[i] || '');
+                      const positions = Array.from({ length: count }, (_, i) => formData.keyword_positions[i] || 0);
+                      setFormData({ ...formData, keyword_pass: count, keyword_names: names, keyword_positions: positions });
+                    }}
+                    helperText="Enter number of keywords to provide names and positions"
                   />
                 </Grid>
+
+                {formData.keyword_pass > 0 && (
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle1" sx={{ mb: 1 }}>Keyword Details</Typography>
+                    <Grid container spacing={2}>
+                      {Array.from({ length: formData.keyword_pass }).map((_, idx) => (
+                        <Grid container item xs={12} spacing={2} key={idx}>
+                          <Grid item xs={12} md={6}>
+                            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                              <TextField
+                                placeholder={`Keyword ${idx + 1} Name`}
+                                value={formData.keyword_names[idx] || ''}
+                                onChange={(e) => {
+                                  const newNames = [...formData.keyword_names];
+                                  newNames[idx] = e.target.value;
+                                  setFormData({ ...formData, keyword_names: newNames });
+                                }}
+                                size="small"
+                                sx={{ flex: 1 }}
+                              />
+                            </Box>
+                          </Grid>
+                          <Grid item xs={12} md={6}>
+                            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                              <TextField
+                                placeholder={`Position`}
+                                type="number"
+                                value={formData.keyword_positions[idx] || ''}
+                                onChange={(e) => {
+                                  const newPositions = [...formData.keyword_positions];
+                                  newPositions[idx] = parseInt(e.target.value) || 0;
+                                  setFormData({ ...formData, keyword_positions: newPositions });
+                                }}
+                                size="small"
+                                sx={{ flex: 1 }}
+                              />
+                            </Box>
+                          </Grid>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Grid>
+                )}
 
                 <Grid item xs={12} md={6}>
                   <TextField
@@ -279,6 +328,41 @@ const AddSEOEntry = () => {
                   />
                 </Grid>
 
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="GMB Changes (count)"
+                    type="number"
+                    value={formData.gmb_changes_count}
+                    onChange={(e) => {
+                      const count = parseInt(e.target.value) || 0;
+                      const details = Array.from({ length: count }, (_, i) => formData.gmb_changes_details[i] || '');
+                      setFormData({ ...formData, gmb_changes_count: count, gmb_changes_details: details });
+                    }}
+                    helperText="Enter number of GMB changes to provide details for"
+                  />
+                </Grid>
+                {formData.gmb_changes_count > 0 && (
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle1" sx={{ mb: 1 }}>GMB Changes Details</Typography>
+                    <Grid container spacing={2}>
+                      {Array.from({ length: formData.gmb_changes_count }).map((_, idx) => (
+                        <Grid item xs={12} md={6} key={idx}>
+                          <TextField
+                            fullWidth
+                            label={`Change ${idx + 1}`}
+                            value={formData.gmb_changes_details[idx] || ''}
+                            onChange={(e) => {
+                              const newDetails = [...formData.gmb_changes_details];
+                              newDetails[idx] = e.target.value;
+                              setFormData({ ...formData, gmb_changes_details: newDetails });
+                            }}
+                          />
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Grid>
+                )}
                 <Grid item xs={12} md={6}>
                   <TextField
                     fullWidth
@@ -372,15 +456,7 @@ const AddSEOEntry = () => {
                   </Grid>
                 )}
 
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Updates"
-                    type="number"
-                    value={formData.updates}
-                    onChange={(e) => setFormData({ ...formData, updates: parseInt(e.target.value) || 0 })}
-                  />
-                </Grid>
+                
 
                 {/* Divider */}
                 <Grid item xs={12}>
@@ -437,16 +513,7 @@ const AddSEOEntry = () => {
                   />
                 </Grid>
 
-                {/* Issues */}
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Issues"
-                    type="number"
-                    value={formData.issues}
-                    onChange={(e) => setFormData({ ...formData, issues: parseInt(e.target.value) || 0 })}
-                  />
-                </Grid>
+                
 
                 {/* Divider */}
                 <Grid item xs={12}>
@@ -496,44 +563,9 @@ const AddSEOEntry = () => {
                   </Grid>
                 )}
 
-                {/* GMB Changes Count */}
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="GMB Changes (count)"
-                    type="number"
-                    value={formData.gmb_changes_count}
-                    onChange={(e) => {
-                      const count = parseInt(e.target.value) || 0;
-                      const details = Array.from({ length: count }, (_, i) => formData.gmb_changes_details[i] || '');
-                      setFormData({ ...formData, gmb_changes_count: count, gmb_changes_details: details });
-                    }}
-                    helperText="Enter number of GMB changes to provide details for"
-                  />
-                </Grid>
+                
 
-                {/* Dynamic GMB Changes Details */}
-                {formData.gmb_changes_count > 0 && (
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle1" sx={{ mb: 1 }}>GMB Changes Details</Typography>
-                    <Grid container spacing={2}>
-                      {Array.from({ length: formData.gmb_changes_count }).map((_, idx) => (
-                        <Grid item xs={12} md={6} key={idx}>
-                          <TextField
-                            fullWidth
-                            label={`Change ${idx + 1}`}
-                            value={formData.gmb_changes_details[idx] || ''}
-                            onChange={(e) => {
-                              const newDetails = [...formData.gmb_changes_details];
-                              newDetails[idx] = e.target.value;
-                              setFormData({ ...formData, gmb_changes_details: newDetails });
-                            }}
-                          />
-                        </Grid>
-                      ))}
-                    </Grid>
-                  </Grid>
-                )}
+                
 
                 {/* Action Buttons */}
                 <Grid item xs={12} sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>

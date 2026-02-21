@@ -71,7 +71,6 @@ const WebsiteSEOTab = () => {
     date: new Date(),
     changes_asked: 0,
     blogs_posted: 0,
-    updates: 0,
     ranking_issues: false,
     reports_sent: false,
     ranking_issues_description: '',
@@ -79,8 +78,9 @@ const WebsiteSEOTab = () => {
     domain_authority: 50,
     page_authority: 50,
     keyword_pass: 0,
+    keyword_names: [],
+    keyword_positions: [],
     site_health: 100,
-    issues: 0,
     gmb_updates: 0,
     gmb_changes_count: 0,
     gmb_changes_details: [],
@@ -142,7 +142,6 @@ const WebsiteSEOTab = () => {
         changes_asked_details: item.changes_asked_details || [],
         changes_asked_statuses: item.changes_asked_statuses || [],
         blogs_posted: item.blogs_posted,
-        updates: item.updates,
         ranking_issues: item.ranking_issues,
         reports_sent: item.reports_sent,
         ranking_issues_description: item.ranking_issues_description || '',
@@ -150,8 +149,9 @@ const WebsiteSEOTab = () => {
         domain_authority: item.domain_authority,
         page_authority: item.page_authority,
         keyword_pass: item.keyword_pass,
+        keyword_names: item.keyword_names || [],
+        keyword_positions: item.keyword_positions || [],
         site_health: item.site_health,
-        issues: item.issues,
         gmb_updates: item.gmb_updates || 0,
         gmb_changes_count: item.gmb_changes_count || 0,
         gmb_changes_details: item.gmb_changes_details || [],
@@ -166,7 +166,6 @@ const WebsiteSEOTab = () => {
         changes_asked_details: [],
         changes_asked_statuses: [],
         blogs_posted: 0,
-        updates: 0,
         ranking_issues: false,
         reports_sent: false,
         ranking_issues_description: '',
@@ -174,8 +173,9 @@ const WebsiteSEOTab = () => {
         domain_authority: 50,
         page_authority: 50,
         keyword_pass: 0,
+        keyword_names: [],
+        keyword_positions: [],
         site_health: 100,
-        issues: 0,
         gmb_updates: 0,
         gmb_changes_count: 0,
         gmb_changes_details: [],
@@ -273,7 +273,7 @@ const WebsiteSEOTab = () => {
       totalChanges: data.reduce((sum, item) => sum + (item.changes_asked || 0), 0),
       avgDA: data.reduce((sum, item) => sum + (item.domain_authority || 0), 0) / data.length,
       avgPA: data.reduce((sum, item) => sum + (item.page_authority || 0), 0) / data.length,
-      totalIssues: data.reduce((sum, item) => sum + (item.issues || 0), 0),
+      
       avgSiteHealth: data.reduce((sum, item) => sum + (item.site_health || 0), 0) / data.length,
       reportsSentCount: data.filter(item => item.reports_sent).length,
       rankingIssuesCount: data.filter(item => item.ranking_issues).length,
@@ -450,25 +450,7 @@ const WebsiteSEOTab = () => {
             </Card>
           </Grid>
 
-          <Grid item xs={12} sm={6} md={2.4}>
-            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <CardContent sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
-                <Typography variant="h6" gutterBottom>
-                  Issues
-                </Typography>
-                <Box>
-                  <Typography variant="h4" gutterBottom sx={{ 
-                    color: stats.totalIssues > 10 ? 'error.main' : stats.totalIssues > 5 ? 'warning.main' : 'success.main' 
-                  }}>
-                    {stats.totalIssues}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    Total Issues
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+          
 
           <Grid item xs={12} sm={6} md={2}>
             <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'linear-gradient(135deg, rgba(255, 152, 0, 0.1) 0%, rgba(255, 193, 7, 0.1) 100%)' }}>
@@ -759,12 +741,57 @@ const WebsiteSEOTab = () => {
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
-                  label="Keyword Ranking"
+                  label="Keyword Ranking (count)"
                   type="number"
                   value={formData.keyword_pass}
-                  onChange={(e) => setFormData({ ...formData, keyword_pass: parseInt(e.target.value) || 0 })}
+                  onChange={(e) => {
+                    const count = parseInt(e.target.value) || 0;
+                    const names = Array.from({ length: count }, (_, i) => formData.keyword_names[i] || '');
+                    const positions = Array.from({ length: count }, (_, i) => formData.keyword_positions[i] || 0);
+                    setFormData({ ...formData, keyword_pass: count, keyword_names: names, keyword_positions: positions });
+                  }}
+                  helperText="Enter number of keywords to provide names and positions"
                 />
               </Grid>
+
+              {formData.keyword_pass > 0 && (
+                <Grid item xs={12}>
+                  <Typography variant="subtitle1" sx={{ mb: 1 }}>Keyword Details</Typography>
+                  <Grid container spacing={2}>
+                    {Array.from({ length: formData.keyword_pass }).map((_, idx) => (
+                      <Grid container item xs={12} spacing={2} key={idx}>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            fullWidth
+                            placeholder={`Keyword ${idx + 1} Name`}
+                            value={formData.keyword_names[idx] || ''}
+                            onChange={(e) => {
+                              const newNames = [...formData.keyword_names];
+                              newNames[idx] = e.target.value;
+                              setFormData({ ...formData, keyword_names: newNames });
+                            }}
+                            size="small"
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            fullWidth
+                            placeholder={`Position`}
+                            type="number"
+                            value={formData.keyword_positions[idx] || ''}
+                            onChange={(e) => {
+                              const newPositions = [...formData.keyword_positions];
+                              newPositions[idx] = parseInt(e.target.value) || 0;
+                              setFormData({ ...formData, keyword_positions: newPositions });
+                            }}
+                            size="small"
+                          />
+                        </Grid>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Grid>
+              )}
               
               <Grid item xs={12} md={6}>
                 <Typography gutterBottom>Page Speed on Mobile: {formData.domain_authority}</Typography>
@@ -894,16 +921,6 @@ const WebsiteSEOTab = () => {
               )}
               
               <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Updates"
-                  type="number"
-                  value={formData.updates}
-                  onChange={(e) => setFormData({ ...formData, updates: parseInt(e.target.value) || 0 })}
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
                 <Typography gutterBottom>Site Health: {formData.site_health}%</Typography>
                 <Slider
                   value={formData.site_health}
@@ -913,16 +930,6 @@ const WebsiteSEOTab = () => {
                   step={1}
                   marks
                   valueLabelDisplay="auto"
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Issues"
-                  type="number"
-                  value={formData.issues}
-                  onChange={(e) => setFormData({ ...formData, issues: parseInt(e.target.value) || 0 })}
                 />
               </Grid>
               
@@ -1054,10 +1061,15 @@ const WebsiteSEOTab = () => {
                 <Grid item xs={12} md={6}>
                   <Typography variant="caption" color="textSecondary">Keyword Ranking</Typography>
                   <Typography variant="body1" sx={{ fontWeight: 600 }}>{selectedDetailsItem.keyword_pass}</Typography>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="caption" color="textSecondary">Updates</Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 600 }}>{selectedDetailsItem.updates}</Typography>
+                  {selectedDetailsItem.keyword_names && selectedDetailsItem.keyword_names.length > 0 && (
+                    <Box sx={{ mt: 1 }}>
+                      {selectedDetailsItem.keyword_names.map((name, idx) => (
+                        <Typography key={idx} variant="body2" sx={{ color: '#90caf9' }}>
+                          • {name} (Position: {selectedDetailsItem.keyword_positions?.[idx] || 'N/A'})
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <Typography variant="caption" color="textSecondary">Page Speed (Mobile)</Typography>
@@ -1071,10 +1083,7 @@ const WebsiteSEOTab = () => {
                   <Typography variant="caption" color="textSecondary">Site Health</Typography>
                   <Typography variant="body1" sx={{ fontWeight: 600 }}>{selectedDetailsItem.site_health}%</Typography>
                 </Grid>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="caption" color="textSecondary">Issues</Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 600 }}>{selectedDetailsItem.issues}</Typography>
-                </Grid>
+                
                 <Grid item xs={12} md={6}>
                   <Typography variant="caption" color="textSecondary">Changes Asked</Typography>
                   <Typography variant="body1" sx={{ fontWeight: 600 }}>{selectedDetailsItem.changes_asked}</Typography>

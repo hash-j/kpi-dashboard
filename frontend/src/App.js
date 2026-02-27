@@ -20,6 +20,7 @@ import AddAccount from './pages/AddAccount';
 import UsersManagement from './pages/UsersManagement';
 import ActivityHistory from './pages/ActivityHistory';
 import AddSEOEntry from './pages/AddSEOEntry';
+import AddSocialMediaEntry from './pages/AddSocialMediaEntry';
 
 // Context Providers
 import { AuthProvider, AuthContext } from './context/AuthContext';
@@ -261,6 +262,7 @@ function App() {
                                 <Route path="/dashboard" element={<Navigate to="/overview" />} />
                                 <Route path="/activity-history" element={<ActivityHistory />} />
                                 <Route path="/add-seo-entry" element={<AddSEOEntry />} />
+                                <Route path="/add-social-media" element={<AddSocialMediaEntry />} />
                                 <Route path="/social-media" element={<Dashboard />} />
                                 <Route path="/website-seo" element={<Dashboard />} />
                                 <Route path="/ads" element={<Dashboard />} />

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Grid,
   Paper,
@@ -32,6 +33,7 @@ import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  Visibility as VisibilityIcon,
   BarChart as BarChartIcon,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -45,6 +47,7 @@ import { AuthContext } from '../../context/AuthContext';
 const platforms = ['Reddit', 'TikTok', 'Instagram', 'Facebook', 'YouTube'];
 
 const SocialMediaTab = () => {
+  const navigate = useNavigate();
   const { user } = useContext(AuthContext);
   const canEdit = user?.role === 'admin' || user?.role === 'editor';
   const [data, setData] = useState([]);
@@ -53,18 +56,10 @@ const SocialMediaTab = () => {
   const [startDate, setStartDate] = useState(new Date(new Date().setMonth(new Date().getMonth() - 1)));
   const [endDate, setEndDate] = useState(new Date());
   const [selectedClient, setSelectedClient] = useState('');
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState(null);
   const [membersPopoverAnchor, setMembersPopoverAnchor] = useState(null);
   const [selectedMembersItem, setSelectedMembersItem] = useState(null);
-  const [formData, setFormData] = useState({
-    client_id: '',
-    team_member_ids: [],
-    date: new Date(),
-    platform: 'Instagram',
-    quality_score: 5,
-    quantity: 0,
-  });
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [selectedDetailsItem, setSelectedDetailsItem] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -109,54 +104,18 @@ const SocialMediaTab = () => {
     }
   };
 
-  const handleOpenDialog = (item = null) => {
-    if (item) {
-      setEditingItem(item);
-      setFormData({
-        client_id: item.client_id,
-        team_member_ids: item.team_member_ids || (item.team_member_id ? [item.team_member_id] : []),
-        date: new Date(item.date),
-        platform: item.platform,
-        quality_score: item.quality_score,
-        quantity: item.quantity,
-      });
-    } else {
-      setEditingItem(null);
-      setFormData({
-        client_id: '',
-        team_member_ids: [],
-        date: new Date(),
-        platform: 'Instagram',
-        quality_score: 5,
-        quantity: 0,
-      });
-    }
-    setDialogOpen(true);
+  const handleOpenDetailsDialog = (item) => {
+    setSelectedDetailsItem(item);
+    setDetailsDialogOpen(true);
   };
 
-  const handleCloseDialog = () => {
-    setDialogOpen(false);
-    setEditingItem(null);
+  const handleCloseDetailsDialog = () => {
+    setDetailsDialogOpen(false);
+    setSelectedDetailsItem(null);
   };
 
-  const handleSubmit = async () => {
-    try {
-      const payload = {
-        ...formData,
-        date: formatDateOnly(formData.date),
-      };
-
-      if (editingItem) {
-        await api.put(`/social-media/${editingItem.id}`, payload);
-      } else {
-        await api.post('/social-media', payload);
-      }
-
-      fetchData();
-      handleCloseDialog();
-    } catch (error) {
-      console.error('Error saving data:', error);
-    }
+  const handleEditClick = (item) => {
+    navigate('/add-social-media', { state: { editingItem: item } });
   };
 
   const handleDelete = async (id) => {
@@ -248,7 +207,7 @@ const SocialMediaTab = () => {
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
-                  onClick={() => handleOpenDialog()}
+                  onClick={() => navigate('/add-social-media')}
                   fullWidth
                 >
                   Add Entry
@@ -390,16 +349,21 @@ const SocialMediaTab = () => {
                       })()}
                     </TableCell>
                     <TableCell>
-                      {canEdit && (
-                        <>
-                          <IconButton size="small" onClick={() => handleOpenDialog(item)}>
-                            <EditIcon />
-                          </IconButton>
-                          <IconButton size="small" onClick={() => handleDelete(item.id)}>
-                            <DeleteIcon />
-                          </IconButton>
-                        </>
-                      )}
+                      <Box sx={{ display: 'flex', gap: 0.5 }}>
+                        <IconButton size="small" onClick={() => handleOpenDetailsDialog(item)} title="View Details">
+                          <VisibilityIcon fontSize="small" />
+                        </IconButton>
+                        {canEdit && (
+                          <>
+                            <IconButton size="small" onClick={() => handleEditClick(item)} title="Edit">
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton size="small" onClick={() => handleDelete(item.id)} title="Delete">
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </>
+                        )}
+                      </Box>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -408,98 +372,158 @@ const SocialMediaTab = () => {
           </TableContainer>
         </Paper>
 
-        {/* Add/Edit Dialog */}
-        <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-          <DialogTitle>
-            {editingItem ? 'Edit Social Media Entry' : 'Add Social Media Entry'}
-          </DialogTitle>
+        {/* View Details Dialog */}
+        <Dialog open={detailsDialogOpen} onClose={handleCloseDetailsDialog} maxWidth="sm" fullWidth>
+          <DialogTitle>Social Media Entry Details</DialogTitle>
           <DialogContent>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel>Client</InputLabel>
-                  <Select
-                    value={formData.client_id}
-                    onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
-                    label="Client"
-                  >
-                    {clients.map((client) => (
-                      <MenuItem key={client.id} value={client.id}>
-                        {client.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+            {selectedDetailsItem && (
+              <Grid container spacing={2} sx={{ mt: 1 }}>
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" sx={{ color: '#90caf9', fontWeight: 600 }}>Date</Typography>
+                  <Typography>{selectedDetailsItem.date}</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" sx={{ color: '#90caf9', fontWeight: 600 }}>Client</Typography>
+                  <Typography>{selectedDetailsItem.client_name}</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" sx={{ color: '#90caf9', fontWeight: 600 }}>Platform</Typography>
+                  <Typography>{selectedDetailsItem.platform}</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" sx={{ color: '#90caf9', fontWeight: 600 }}>Combined Quality Score (Average)</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography>{selectedDetailsItem.quality_score}/10</Typography>
+                    <Box sx={{ width: 150 }}>
+                      <Slider
+                        value={selectedDetailsItem.quality_score}
+                        min={0}
+                        max={10}
+                        step={1}
+                        marks
+                        disabled
+                        size="small"
+                      />
+                    </Box>
+                  </Box>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" sx={{ color: '#90caf9', fontWeight: 600 }}>Total Posts (All Types)</Typography>
+                  <Typography>{selectedDetailsItem.quantity}</Typography>
+                </Grid>
+
+                {/* Instagram Details */}
+                {selectedDetailsItem.platform === 'Instagram' && (
+                  <>
+                    <Grid item xs={12}>
+                      <Typography variant="subtitle2" sx={{ color: '#90caf9', fontWeight: 600 }}>Instagram Details</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" sx={{ color: '#b0b0c0' }}>Stories (Qty)</Typography>
+                      <Typography sx={{ fontWeight: 600 }}>{selectedDetailsItem.instagram_stories || 0}</Typography>
+                      <Typography variant="caption" sx={{ color: '#90caf9' }}>Quality: {selectedDetailsItem.instagram_stories_quality || 0}/10</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" sx={{ color: '#b0b0c0' }}>Posts (Qty)</Typography>
+                      <Typography sx={{ fontWeight: 600 }}>{selectedDetailsItem.instagram_posts || 0}</Typography>
+                      <Typography variant="caption" sx={{ color: '#90caf9' }}>Quality: {selectedDetailsItem.instagram_posts_quality || 0}/10</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" sx={{ color: '#b0b0c0' }}>Reels (Qty)</Typography>
+                      <Typography sx={{ fontWeight: 600 }}>{selectedDetailsItem.instagram_reels || 0}</Typography>
+                      <Typography variant="caption" sx={{ color: '#90caf9' }}>Quality: {selectedDetailsItem.instagram_reels_quality || 0}/10</Typography>
+                    </Grid>
+                  </>
+                )}
+
+                {/* Facebook Details */}
+                {selectedDetailsItem.platform === 'Facebook' && (
+                  <>
+                    <Grid item xs={12}>
+                      <Typography variant="subtitle2" sx={{ color: '#90caf9', fontWeight: 600 }}>Facebook Details</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" sx={{ color: '#b0b0c0' }}>Stories (Qty)</Typography>
+                      <Typography sx={{ fontWeight: 600 }}>{selectedDetailsItem.facebook_stories || 0}</Typography>
+                      <Typography variant="caption" sx={{ color: '#90caf9' }}>Quality: {selectedDetailsItem.facebook_stories_quality || 0}/10</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" sx={{ color: '#b0b0c0' }}>Posts (Qty)</Typography>
+                      <Typography sx={{ fontWeight: 600 }}>{selectedDetailsItem.facebook_posts || 0}</Typography>
+                      <Typography variant="caption" sx={{ color: '#90caf9' }}>Quality: {selectedDetailsItem.facebook_posts_quality || 0}/10</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" sx={{ color: '#b0b0c0' }}>Reels (Qty)</Typography>
+                      <Typography sx={{ fontWeight: 600 }}>{selectedDetailsItem.facebook_reels || 0}</Typography>
+                      <Typography variant="caption" sx={{ color: '#90caf9' }}>Quality: {selectedDetailsItem.facebook_reels_quality || 0}/10</Typography>
+                    </Grid>
+                  </>
+                )}
+
+                {/* TikTok Details */}
+                {selectedDetailsItem.platform === 'TikTok' && (
+                  <>
+                    <Grid item xs={12}>
+                      <Typography variant="subtitle2" sx={{ color: '#90caf9', fontWeight: 600 }}>TikTok Details</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" sx={{ color: '#b0b0c0' }}>Stories (Qty)</Typography>
+                      <Typography sx={{ fontWeight: 600 }}>{selectedDetailsItem.tiktok_stories || 0}</Typography>
+                      <Typography variant="caption" sx={{ color: '#90caf9' }}>Quality: {selectedDetailsItem.tiktok_stories_quality || 0}/10</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" sx={{ color: '#b0b0c0' }}>Posts (Qty)</Typography>
+                      <Typography sx={{ fontWeight: 600 }}>{selectedDetailsItem.tiktok_posts || 0}</Typography>
+                      <Typography variant="caption" sx={{ color: '#90caf9' }}>Quality: {selectedDetailsItem.tiktok_posts_quality || 0}/10</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" sx={{ color: '#b0b0c0' }}>Reels (Qty)</Typography>
+                      <Typography sx={{ fontWeight: 600 }}>{selectedDetailsItem.tiktok_reels || 0}</Typography>
+                      <Typography variant="caption" sx={{ color: '#90caf9' }}>Quality: {selectedDetailsItem.tiktok_reels_quality || 0}/10</Typography>
+                    </Grid>
+                  </>
+                )}
+
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" sx={{ color: '#90caf9', fontWeight: 600 }}>Team Members</Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    {(selectedDetailsItem.team_member_ids || []).length > 0 ? (
+                      (selectedDetailsItem.team_member_ids || []).map((memberId) => (
+                        <Box key={memberId} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Avatar
+                            sx={{
+                              width: 32,
+                              height: 32,
+                              bgcolor: 'primary.main',
+                              fontSize: '0.75rem',
+                            }}
+                          >
+                            {getMemberName(memberId)
+                              .split(' ')
+                              .map(n => n[0])
+                              .join('')
+                              .toUpperCase()}
+                          </Avatar>
+                          <Typography>{getMemberName(memberId)}</Typography>
+                        </Box>
+                      ))
+                    ) : (
+                      <Typography color="textSecondary">No team members assigned</Typography>
+                    )}
+                  </Box>
+                </Grid>
               </Grid>
-              <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel>Team Member</InputLabel>
-                  <Select
-                    multiple
-                    value={formData.team_member_ids}
-                    onChange={(e) => setFormData({ ...formData, team_member_ids: e.target.value })}
-                    label="Team Member"
-                  >
-                    {teamMembers.map((member) => (
-                      <MenuItem key={member.id} value={member.id}>
-                        {member.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12}>
-                <DatePicker
-                  label="Date"
-                  value={formData.date}
-                  onChange={(newValue) => setFormData({ ...formData, date: newValue })}
-                  renderInput={(params) => <TextField {...params} fullWidth />}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel>Platform</InputLabel>
-                  <Select
-                    value={formData.platform}
-                    onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
-                    label="Platform"
-                  >
-                    {platforms.map((platform) => (
-                      <MenuItem key={platform} value={platform}>
-                        {platform}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12}>
-                <Typography gutterBottom>Quality Score: {formData.quality_score}/10</Typography>
-                <Slider
-                  value={formData.quality_score}
-                  onChange={(_, value) => setFormData({ ...formData, quality_score: value })}
-                  min={0}
-                  max={10}
-                  step={1}
-                  marks
-                  valueLabelDisplay="auto"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Quantity"
-                  type="number"
-                  value={formData.quantity}
-                  onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
-                />
-              </Grid>
-            </Grid>
+            )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleCloseDialog}>Cancel</Button>
-            <Button onClick={handleSubmit} variant="contained">
-              {editingItem ? 'Update' : 'Add'}
-            </Button>
+            {canEdit && selectedDetailsItem && (
+              <Box sx={{ flex: 1, display: 'flex', gap: 1 }}>
+                <Button onClick={() => { handleCloseDetailsDialog(); handleEditClick(selectedDetailsItem); }} variant="contained" startIcon={<EditIcon />}>
+                  Edit
+                </Button>
+              </Box>
+            )}
+            <Button onClick={handleCloseDetailsDialog}>Close</Button>
           </DialogActions>
         </Dialog>
 

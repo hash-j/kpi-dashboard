@@ -51,18 +51,63 @@ router.post('/', authorize(['admin', 'editor']), async (req, res) => {
         date,
         platform,
         quality_score,
-        quantity
+        quantity,
+        instagram_stories,
+        instagram_stories_quality,
+        instagram_posts,
+        instagram_posts_quality,
+        instagram_reels,
+        instagram_reels_quality,
+        facebook_stories,
+        facebook_stories_quality,
+        facebook_posts,
+        facebook_posts_quality,
+        facebook_reels,
+        facebook_reels_quality,
+        tiktok_stories,
+        tiktok_stories_quality,
+        tiktok_posts,
+        tiktok_posts_quality,
+        tiktok_reels,
+        tiktok_reels_quality
     } = req.body;
 
     // determine primary team_member_id for backward compatibility
     const primaryTeamMemberId = Array.isArray(team_member_ids) && team_member_ids.length > 0 ? team_member_ids[0] : team_member_id;
 
+    // Calculate total quantity and quality score based on platform
+    let finalQuantity = quantity || 0;
+    let finalQualityScore = quality_score || 5;
+
+    // For platforms with detailed breakdown (Instagram, Facebook, TikTok), calculate from details
+    if (['Instagram', 'Facebook', 'TikTok'].includes(platform)) {
+        // Calculate total quantity (sum of all platform specific quantities)
+        finalQuantity = (instagram_stories || 0) + (instagram_posts || 0) + (instagram_reels || 0) +
+                        (facebook_stories || 0) + (facebook_posts || 0) + (facebook_reels || 0) +
+                        (tiktok_stories || 0) + (tiktok_posts || 0) + (tiktok_reels || 0);
+
+        // Calculate combined quality score (average of all platform specific quality scores)
+        const allQualityScores = [
+            instagram_stories_quality || 5, instagram_posts_quality || 5, instagram_reels_quality || 5,
+            facebook_stories_quality || 5, facebook_posts_quality || 5, facebook_reels_quality || 5,
+            tiktok_stories_quality || 5, tiktok_posts_quality || 5, tiktok_reels_quality || 5
+        ];
+        finalQualityScore = Math.round(allQualityScores.reduce((a, b) => a + b, 0) / allQualityScores.length);
+    }
+    // For Reddit and YouTube, use the manual values provided by user
+
     try {
         const result = await pool.query(
             `INSERT INTO social_media_kpis 
-            (client_id, team_member_id, team_member_ids, date, platform, quality_score, quantity)
-            VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-            [client_id, primaryTeamMemberId, team_member_ids || [], date, platform, quality_score, quantity]
+            (client_id, team_member_id, team_member_ids, date, platform, quality_score, quantity,
+             instagram_stories, instagram_stories_quality, instagram_posts, instagram_posts_quality, instagram_reels, instagram_reels_quality,
+             facebook_stories, facebook_stories_quality, facebook_posts, facebook_posts_quality, facebook_reels, facebook_reels_quality,
+             tiktok_stories, tiktok_stories_quality, tiktok_posts, tiktok_posts_quality, tiktok_reels, tiktok_reels_quality)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25) RETURNING *`,
+            [client_id, primaryTeamMemberId, team_member_ids || [], date, platform, finalQualityScore, finalQuantity,
+             instagram_stories || 0, instagram_stories_quality || 5, instagram_posts || 0, instagram_posts_quality || 5, instagram_reels || 0, instagram_reels_quality || 5,
+             facebook_stories || 0, facebook_stories_quality || 5, facebook_posts || 0, facebook_posts_quality || 5, facebook_reels || 0, facebook_reels_quality || 5,
+             tiktok_stories || 0, tiktok_stories_quality || 5, tiktok_posts || 0, tiktok_posts_quality || 5, tiktok_reels || 0, tiktok_reels_quality || 5]
         );
         
         const kpi = result.rows[0];
@@ -101,19 +146,65 @@ router.put('/:id', authorize(['admin', 'editor']), async (req, res) => {
         date,
         platform,
         quality_score,
-        quantity
+        quantity,
+        instagram_stories,
+        instagram_stories_quality,
+        instagram_posts,
+        instagram_posts_quality,
+        instagram_reels,
+        instagram_reels_quality,
+        facebook_stories,
+        facebook_stories_quality,
+        facebook_posts,
+        facebook_posts_quality,
+        facebook_reels,
+        facebook_reels_quality,
+        tiktok_stories,
+        tiktok_stories_quality,
+        tiktok_posts,
+        tiktok_posts_quality,
+        tiktok_reels,
+        tiktok_reels_quality
     } = req.body;
 
     const primaryTeamMemberId = Array.isArray(team_member_ids) && team_member_ids.length > 0 ? team_member_ids[0] : team_member_id;
+
+    // Calculate total quantity and quality score based on platform
+    let finalQuantity = quantity || 0;
+    let finalQualityScore = quality_score || 5;
+
+    // For platforms with detailed breakdown (Instagram, Facebook, TikTok), calculate from details
+    if (['Instagram', 'Facebook', 'TikTok'].includes(platform)) {
+        // Calculate total quantity (sum of all platform specific quantities)
+        finalQuantity = (instagram_stories || 0) + (instagram_posts || 0) + (instagram_reels || 0) +
+                        (facebook_stories || 0) + (facebook_posts || 0) + (facebook_reels || 0) +
+                        (tiktok_stories || 0) + (tiktok_posts || 0) + (tiktok_reels || 0);
+
+        // Calculate combined quality score (average of all platform specific quality scores)
+        const allQualityScores = [
+            instagram_stories_quality || 5, instagram_posts_quality || 5, instagram_reels_quality || 5,
+            facebook_stories_quality || 5, facebook_posts_quality || 5, facebook_reels_quality || 5,
+            tiktok_stories_quality || 5, tiktok_posts_quality || 5, tiktok_reels_quality || 5
+        ];
+        finalQualityScore = Math.round(allQualityScores.reduce((a, b) => a + b, 0) / allQualityScores.length);
+    }
+    // For Reddit and YouTube, use the manual values provided by user
 
     try {
         const result = await pool.query(
             `UPDATE social_media_kpis 
             SET client_id = $1, team_member_id = $2, team_member_ids = $3, date = $4, 
                 platform = $5, quality_score = $6, quantity = $7,
+                instagram_stories = $8, instagram_stories_quality = $9, instagram_posts = $10, instagram_posts_quality = $11, instagram_reels = $12, instagram_reels_quality = $13,
+                facebook_stories = $14, facebook_stories_quality = $15, facebook_posts = $16, facebook_posts_quality = $17, facebook_reels = $18, facebook_reels_quality = $19,
+                tiktok_stories = $20, tiktok_stories_quality = $21, tiktok_posts = $22, tiktok_posts_quality = $23, tiktok_reels = $24, tiktok_reels_quality = $25,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = $8 RETURNING *`,
-            [client_id, primaryTeamMemberId, team_member_ids || [], date, platform, quality_score, quantity, id]
+            WHERE id = $26 RETURNING *`,
+            [client_id, primaryTeamMemberId, team_member_ids || [], date, platform, finalQualityScore, finalQuantity,
+             instagram_stories || 0, instagram_stories_quality || 5, instagram_posts || 0, instagram_posts_quality || 5, instagram_reels || 0, instagram_reels_quality || 5,
+             facebook_stories || 0, facebook_stories_quality || 5, facebook_posts || 0, facebook_posts_quality || 5, facebook_reels || 0, facebook_reels_quality || 5,
+             tiktok_stories || 0, tiktok_stories_quality || 5, tiktok_posts || 0, tiktok_posts_quality || 5, tiktok_reels || 0, tiktok_reels_quality || 5,
+             id]
         );
         
         if (result.rows.length === 0) {

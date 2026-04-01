@@ -26,6 +26,14 @@ A comprehensive dashboard for tracking client performance across multiple platfo
 6. **Team** - Task assignment, completion, quality scores
 7. **Overview** - Consolidated view of all KPIs
 
+## Live Demo
+
+View the live dashboard at: [https://kpi-dashboard-olive.vercel.app/](https://kpi-dashboard-olive.vercel.app/)
+
+### Viewer Credentials
+- Username: `viewer.github`
+- Password: `git.view@123`
+
 ## Tech Stack
 
 ### Frontend

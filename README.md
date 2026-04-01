@@ -34,6 +34,14 @@ View the live dashboard at: [https://kpi-dashboard-olive.vercel.app/](https://kp
 - Username: `viewer.github`
 - Password: `git.view@123`
 
+## How to View Data
+
+1. **Login**: Use the viewer credentials above to access the dashboard.
+2. **Select Date Range**: Use the date picker to choose "From" and "To" dates for filtering data across all tabs.
+3. **Filter by Client or Team Member**: In each tab, select specific clients or team members from the dropdowns to narrow down the data.
+4. **Navigate Tabs**: Switch between the 7 tabs (Social Media, Website/SEO, ADS, Email Marketing, Client Responses, Team, Overview) to view specific KPI metrics and charts.
+5. **View Charts and Tables**: Data is displayed in interactive charts (using Recharts) and tables for easy analysis.
+
 ## Tech Stack
 
 ### Frontend
